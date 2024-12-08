@@ -6,6 +6,12 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		B85378C02CF0114A00D35308 /* FirebaseDatabase in Frameworks */ = {isa = PBXBuildFile; productRef = B85378BF2CF0114A00D35308 /* FirebaseDatabase */; };
+		B8E8577F2CEC751D00BF173E /* FirebaseFirestore in Frameworks */ = {isa = PBXBuildFile; productRef = B8E8577E2CEC751D00BF173E /* FirebaseFirestore */; };
+		B8E857812CEC752200BF173E /* FirebaseAuth in Frameworks */ = {isa = PBXBuildFile; productRef = B8E857802CEC752200BF173E /* FirebaseAuth */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXFileReference section */
 		B8E857692CEC735000BF173E /* TrackMyHand.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = TrackMyHand.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
@@ -23,6 +29,9 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				B85378C02CF0114A00D35308 /* FirebaseDatabase in Frameworks */,
+				B8E8577F2CEC751D00BF173E /* FirebaseFirestore in Frameworks */,
+				B8E857812CEC752200BF173E /* FirebaseAuth in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -33,6 +42,7 @@
 			isa = PBXGroup;
 			children = (
 				B8E8576B2CEC735000BF173E /* TrackMyHand */,
+				B8E8577D2CEC751D00BF173E /* Frameworks */,
 				B8E8576A2CEC735000BF173E /* Products */,
 			);
 			sourceTree = "<group>";
@@ -43,6 +53,13 @@
 				B8E857692CEC735000BF173E /* TrackMyHand.app */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		B8E8577D2CEC751D00BF173E /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Frameworks;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -65,6 +82,9 @@
 			);
 			name = TrackMyHand;
 			packageProductDependencies = (
+				B8E8577E2CEC751D00BF173E /* FirebaseFirestore */,
+				B8E857802CEC752200BF173E /* FirebaseAuth */,
+				B85378BF2CF0114A00D35308 /* FirebaseDatabase */,
 			);
 			productName = TrackMyHand;
 			productReference = B8E857692CEC735000BF173E /* TrackMyHand.app */;
@@ -94,6 +114,9 @@
 			);
 			mainGroup = B8E857602CEC735000BF173E;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				B8E8577C2CEC741B00BF173E /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = B8E8576A2CEC735000BF173E /* Products */;
 			projectDirPath = "";
@@ -324,6 +347,35 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		B8E8577C2CEC741B00BF173E /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/firebase/firebase-ios-sdk";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 10.17.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		B85378BF2CF0114A00D35308 /* FirebaseDatabase */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = B8E8577C2CEC741B00BF173E /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseDatabase;
+		};
+		B8E8577E2CEC751D00BF173E /* FirebaseFirestore */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = B8E8577C2CEC741B00BF173E /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseFirestore;
+		};
+		B8E857802CEC752200BF173E /* FirebaseAuth */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = B8E8577C2CEC741B00BF173E /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseAuth;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = B8E857612CEC735000BF173E /* Project object */;
 }
