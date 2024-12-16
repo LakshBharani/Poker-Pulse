@@ -8,56 +8,98 @@
 import SwiftUI
 
 struct ContentView: View {
-    @StateObject private var viewModel = GameViewModel()
-
+    @StateObject private var service = FirestoreService()
+    @Environment(\.colorScheme) var colorScheme
+    @State private var showingNewGame = false
+    @State private var showingAllUsers = false
+    @State private var users: [User] = []
+    @State private var games: [Game] = []
+    @State private var gamesFetched = 7
+    
     var body: some View {
-        NavigationView {
-            List(viewModel.games) { game in
-                NavigationLink(destination: GameDetailView(game: game)) {
-                    VStack(alignment: .leading) {
-                        Text("Game ID: \(game.game_id)").font(.headline)
-                        Text("Date: \(game.date)").font(.subheadline)
-                        Text("Location: \(game.location)").font(.subheadline)
+        NavigationStack {
+            
+            List {
+                Section(header: Text("Leaderboard (\(users.count))")) {
+                    
+                    ForEach(users) { user in
+                        HStack {
+                            VStack(alignment: .leading) {
+                                Text(user.id)
+                                    .font(.headline)
+                                    .foregroundStyle(colorScheme == .dark ? .orange : .black)
+                                Text("Games Played: \(user.gamesPlayed)")
+                                Text("Total Profit: \(user.totalProfit, specifier: "%.2f")")
+                            }
+                            
+                            Spacer()
+                            
+                            Image(systemName: "medal.fill")
+                                .font(.title)
+                                .foregroundStyle(.orange)
+                        }
+                    }
+                    NavigationLink(destination: AllUsers()) {
+                        Button("Show More") {
+                            showingAllUsers = true
+                        }
+                    }
+                    .disabled(users.isEmpty)
+                }
+                
+                Section(header: Text("Games (\(games.count))")) {
+                    Button("New Game") { showingNewGame = true }
+                    ForEach(games) { game in
+                        HStack {
+                            VStack(alignment: .leading) {
+                                Text("\(game.date.formatted(date: .long, time: .shortened))")
+                                    .fontWeight(.semibold)
+                                Text("Players : \(game.players.count)")
+                                    .font(.callout)
+                                let totalPot = game.players.reduce(0) { $0 + $1.buyIn }
+                                Text("Total Pot: \(totalPot, specifier: "%.2f")")
+                                    .font(.callout)
+                            }
+                        }
                     }
                 }
             }
-            .navigationTitle("All Game")
-            .navigationBarItems(trailing: HStack {
-                Button {
-                    
-                } label: {
-                    Text("Create Game")
+            .refreshable {
+                service.fetchLeaderboard { users in
+                    self.users = users
+                    print(users)
                 }
-            })
-            .onAppear {
-                viewModel.fetchGames()
+                service.fetchGames(limit: gamesFetched) { games in
+                    self.games = games
+                }
+            }
+            .navigationTitle("Poker Tracker")
+            .toolbar {
+                ToolbarItem(placement: .primaryAction) {
+                    NavigationLink(destination: CreateNewProfile()) {
+                        Image(systemName: "person.fill.badge.plus")
+                    }
+                }
+            }
+            .sheet(isPresented: $showingNewGame) {
+                NewGameView()
+            }
+            
+        }
+        .onAppear {
+            service.fetchLeaderboard { users in
+                self.users = users
+            }
+            service.fetchGames(limit: gamesFetched) { games in
+                self.games = games
             }
         }
     }
 }
 
-struct GameDetailView: View {
-    let game: Game
-
-    var body: some View {
-        VStack {
-            Text("Game Details")
-                .font(.largeTitle)
-            Text("Location: \(game.location)")
-            Text("Date: \(game.date)")
-            List(game.players) { player in
-                VStack(alignment: .leading) {
-                    Text("Player: \(player.name)").font(.headline)
-                    Text("Net Cash: \(player.net_cash)")
-                    Text("Settled: \(player.settled ? "Yes" : "No")")
-                }
-            }
-        }
-        .padding()
-    }
-}
 
 
 #Preview {
     ContentView()
 }
+

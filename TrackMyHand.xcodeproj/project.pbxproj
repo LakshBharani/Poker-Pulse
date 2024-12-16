@@ -7,6 +7,9 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		B83ECF3C2D0882E200679880 /* FirebaseAnalytics in Frameworks */ = {isa = PBXBuildFile; productRef = B83ECF3B2D0882E200679880 /* FirebaseAnalytics */; };
+		B83ECF3E2D0882E200679880 /* FirebaseAnalyticsSwift in Frameworks */ = {isa = PBXBuildFile; productRef = B83ECF3D2D0882E200679880 /* FirebaseAnalyticsSwift */; };
+		B83ECF402D0882E200679880 /* FirebaseFirestoreSwift in Frameworks */ = {isa = PBXBuildFile; productRef = B83ECF3F2D0882E200679880 /* FirebaseFirestoreSwift */; };
 		B85378C02CF0114A00D35308 /* FirebaseDatabase in Frameworks */ = {isa = PBXBuildFile; productRef = B85378BF2CF0114A00D35308 /* FirebaseDatabase */; };
 		B8E8577F2CEC751D00BF173E /* FirebaseFirestore in Frameworks */ = {isa = PBXBuildFile; productRef = B8E8577E2CEC751D00BF173E /* FirebaseFirestore */; };
 		B8E857812CEC752200BF173E /* FirebaseAuth in Frameworks */ = {isa = PBXBuildFile; productRef = B8E857802CEC752200BF173E /* FirebaseAuth */; };
@@ -31,7 +34,10 @@
 			files = (
 				B85378C02CF0114A00D35308 /* FirebaseDatabase in Frameworks */,
 				B8E8577F2CEC751D00BF173E /* FirebaseFirestore in Frameworks */,
+				B83ECF3C2D0882E200679880 /* FirebaseAnalytics in Frameworks */,
 				B8E857812CEC752200BF173E /* FirebaseAuth in Frameworks */,
+				B83ECF3E2D0882E200679880 /* FirebaseAnalyticsSwift in Frameworks */,
+				B83ECF402D0882E200679880 /* FirebaseFirestoreSwift in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -85,6 +91,9 @@
 				B8E8577E2CEC751D00BF173E /* FirebaseFirestore */,
 				B8E857802CEC752200BF173E /* FirebaseAuth */,
 				B85378BF2CF0114A00D35308 /* FirebaseDatabase */,
+				B83ECF3B2D0882E200679880 /* FirebaseAnalytics */,
+				B83ECF3D2D0882E200679880 /* FirebaseAnalyticsSwift */,
+				B83ECF3F2D0882E200679880 /* FirebaseFirestoreSwift */,
 			);
 			productName = TrackMyHand;
 			productReference = B8E857692CEC735000BF173E /* TrackMyHand.app */;
@@ -278,6 +287,7 @@
 				DEVELOPMENT_TEAM = 967QCW5DWY;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.entertainment";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -307,6 +317,7 @@
 				DEVELOPMENT_TEAM = 967QCW5DWY;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.entertainment";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -360,6 +371,21 @@
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
+		B83ECF3B2D0882E200679880 /* FirebaseAnalytics */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = B8E8577C2CEC741B00BF173E /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseAnalytics;
+		};
+		B83ECF3D2D0882E200679880 /* FirebaseAnalyticsSwift */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = B8E8577C2CEC741B00BF173E /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseAnalyticsSwift;
+		};
+		B83ECF3F2D0882E200679880 /* FirebaseFirestoreSwift */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = B8E8577C2CEC741B00BF173E /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseFirestoreSwift;
+		};
 		B85378BF2CF0114A00D35308 /* FirebaseDatabase */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = B8E8577C2CEC741B00BF173E /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
