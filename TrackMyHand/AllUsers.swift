@@ -30,7 +30,7 @@ struct AllUsers: View {
                     List {
                         ForEach(visibleUsers) { user in
                             HStack {
-                                NavigationLink(destination: UserDetails()) {
+                                NavigationLink(destination: UserDetails(user: user)) {
                                     Text("\(user.id)")
                                 }
                             }

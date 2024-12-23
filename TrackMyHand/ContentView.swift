@@ -6,49 +6,64 @@
 //
 
 import SwiftUI
+import CoreData
+
 
 struct ContentView: View {
-    @StateObject private var service = FirestoreService()
+    @StateObject private var firestoreService = FirestoreService()
     @Environment(\.colorScheme) var colorScheme
-    @State private var showingNewGame = false
-    @State private var showingAllUsers = false
     @State private var users: [User] = []
     @State private var games: [Game] = []
     @State private var gamesFetched = 7
+    @State private var totalUsers = 0
+    @State private var totalGames = 0
+    
     
     var body: some View {
         NavigationStack {
-            
             List {
-                Section(header: Text("Leaderboard (\(users.count))")) {
-                    
+                Section(header: Text("Leaderboard (\(totalUsers))")) {
                     ForEach(users) { user in
                         HStack {
                             VStack(alignment: .leading) {
                                 Text(user.id)
                                     .font(.headline)
                                     .foregroundStyle(colorScheme == .dark ? .orange : .black)
-                                Text("Games Played: \(user.gamesPlayed)")
-                                Text("Total Profit: \(user.totalProfit, specifier: "%.2f")")
+                                Text("Games Played: \(user.profitData.count - 1)")
+                                    .padding(.bottom, 2)
+                                Text("+\(user.totalProfit, specifier: "%.2f")")
+                                    .font(.subheadline)
+                                    .bold()
+                                    .foregroundStyle(.black)
+                                    .frame(width: 60, alignment: .trailing)
+                                    .padding(EdgeInsets.init(top: 1, leading: 10, bottom: 1, trailing: 5))
+                                    .background(content: {
+                                        RoundedRectangle(cornerRadius: CGFloat(5))
+                                            .foregroundStyle(.green)
+                                    })
                             }
                             
                             Spacer()
                             
                             Image(systemName: "medal.fill")
                                 .font(.title)
-                                .foregroundStyle(.orange)
+                                .foregroundStyle(getBadgeColor(index: users.firstIndex(where: { $0.id == user.id })!))
                         }
+                        .background(
+                            NavigationLink(destination: UserDetails(user: user)) {}
+                                .opacity(0)
+                        )
                     }
                     NavigationLink(destination: AllUsers()) {
-                        Button("Show More") {
-                            showingAllUsers = true
-                        }
+                        Button("Show More") {}
                     }
                     .disabled(users.isEmpty)
                 }
                 
-                Section(header: Text("Games (\(games.count))")) {
-                    Button("New Game") { showingNewGame = true }
+                Section(header: Text("Games (\(totalGames))")) {
+                    NavigationLink(destination: NewGameView()) {
+                        Button("New Game") {}
+                    }
                     ForEach(games) { game in
                         HStack {
                             VStack(alignment: .leading) {
@@ -65,34 +80,40 @@ struct ContentView: View {
                 }
             }
             .refreshable {
-                service.fetchLeaderboard { users in
-                    self.users = users
-                    print(users)
-                }
-                service.fetchGames(limit: gamesFetched) { games in
-                    self.games = games
-                }
+                reloadData()
             }
             .navigationTitle("Poker Tracker")
-            .toolbar {
-                ToolbarItem(placement: .primaryAction) {
-                    NavigationLink(destination: CreateNewProfile()) {
-                        Image(systemName: "person.fill.badge.plus")
-                    }
-                }
-            }
-            .sheet(isPresented: $showingNewGame) {
-                NewGameView()
-            }
-            
         }
         .onAppear {
-            service.fetchLeaderboard { users in
-                self.users = users
-            }
-            service.fetchGames(limit: gamesFetched) { games in
-                self.games = games
-            }
+            reloadData()
+        }
+    }
+    
+    func reloadData() {
+        firestoreService.fetchLeaderboard { users in
+            self.users = users
+        }
+        firestoreService.fetchGames(limit: gamesFetched) { games in
+            self.games = games
+        }
+        firestoreService.fetchTotalUserCount() { count in
+            self.totalUsers = count ?? totalUsers
+        }
+        firestoreService.fetchTotalGameCount() { count in
+            self.totalGames = count ?? totalGames
+        }
+    }
+    
+    func getBadgeColor(index: Int) -> Color {
+        if index == 0 {
+            return Color.orange
+        } else if index == 1 {
+            return Color.gray.mix(with: Color.white, by: 0.6)
+        } else if index == 2 {
+            return Color.brown.mix(with: Color.red, by: 0.35)
+        }
+        else {
+            return Color.red
         }
     }
 }
