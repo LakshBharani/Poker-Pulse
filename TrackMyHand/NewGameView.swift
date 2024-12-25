@@ -15,38 +15,28 @@ struct NewGameView: View {
     @State private var isAllPlayersExisting: Bool = true
     @State private var showAlert = false
     @State private var allUsers: [User] = []
-    @Environment(\.presentationMode) var presentationMode
     @StateObject private var firestoreService = FirestoreService()
     @State private var startGame: Bool = false
-    @State private var newGame: Game = Game(isActive: false, id: "", gameCode: "", totalPot: 0.0, date: Date(), players: [], transactions: [])
-    
+    @State private var newGame: Game = Game(isActive: false, id: "", gameCode: "", totalPot: 0.0, date: Date(), players: [], events: [])
+    @State private var navigateToGame: Bool = false
+
     // Game details
     @State private var allPlayers: [Player] = []
     @State private var isQuickAddEnabled: Bool = false
     @State private var errorMessage = ""
-    
+
     var body: some View {
-        NavigationView {
+        NavigationStack {
             Form {
                 // Section for player details
                 Section(header: Text("Players")) {
-                    
-                    if (allPlayers.isEmpty && newPlayerUID.isEmpty) {
-                        Button(action: {
-                            // TODO: write function to save favorites in DB and fetch
-                            let favorites = ["LAKSH", "ATHARV", "SAHAJ", "USMAAN", "AREEB", "SAIF", "ANIRUDH", "LAKSHYA"]
-                            for user in favorites {
-                                let newPlayer = Player(id: user, buyIn: 5, cashOut: 0, profit: 0)
-                                allPlayers.append(newPlayer)
-                            }
-                        }) {
+                    if allPlayers.isEmpty && newPlayerUID.isEmpty {
+                        Button(action: quickAddFavorites) {
                             Label("Quick Add", systemImage: "star.fill")
                                 .font(.headline)
                         }
                         .foregroundStyle(.orange)
-                    }
-                    
-                    else if (!isAllPlayersExisting && !newPlayerUID.isEmpty) {
+                    } else if (!isAllPlayersExisting && !newPlayerUID.isEmpty) {
                         Button(action: {
                             showAlert = true
                         }) {
@@ -56,27 +46,23 @@ struct NewGameView: View {
                         .alert("Create new user?", isPresented: $showAlert) {
                             Button("Yes") {
                                 newPlayerUID = newPlayerUID.uppercased().trimmingCharacters(in: .whitespacesAndNewlines)
-                                if (!(newPlayerUID == "")) {
-                                    firestoreService.createUser(id: newPlayerUID) {_ in}
+                                if !(newPlayerUID.isEmpty) {
+                                    firestoreService.createUser(id: newPlayerUID) { _ in }
                                     allUsers.append(User(id: newPlayerUID, totalProfit: 0, isFavorite: false, profitData: [0], totalWins: 0, timePlayed: 0, totalBuyIn: 0))
-                                    allPlayers.append(Player(id: newPlayerUID, buyIn: 5, cashOut: 0, profit: 0))
+                                    allPlayers.append(Player(id: newPlayerUID, buyIn: 5, cashOut: 0, profit: -5.00))
                                     newPlayerUID = ""
                                     isAllPlayersExisting = true
                                 }
                             }
                             
-                            Button("Cancel", role: .cancel) {
-                                
-                            }
-                            .foregroundStyle(.red)
+                            Button("Cancel", role: .cancel) {}
+                                .foregroundStyle(.red)
                         }
-                    }
-                    
-                    else {
+                    } else if (isAllPlayersUnique && !newPlayerUID.isEmpty) || newPlayerUID.isEmpty {
                         Button(action: {
-                            if (!newPlayerUID.isEmpty) {
+                            if !newPlayerUID.isEmpty {
                                 newPlayerUID = newPlayerUID.trimmingCharacters(in: .whitespacesAndNewlines)
-                                let newPlayer = Player(id: newPlayerUID, buyIn: 5, cashOut: 0, profit: 0)
+                                let newPlayer = Player(id: newPlayerUID, buyIn: 5, cashOut: 0, profit: -5.00)
                                 allPlayers.append(newPlayer)
                                 newPlayerUID = ""
                             }
@@ -84,100 +70,121 @@ struct NewGameView: View {
                             Label("Add Player", systemImage: "plus.circle")
                         }
                     }
-                    
-                    if (!isAllPlayersUnique) {
-                        Button(action: {
-                        }) {
+
+
+                    if !isAllPlayersUnique {
+                        Button(action: {}) {
                             Label("Player Exists", systemImage: "exclamationmark.triangle")
                                 .foregroundStyle(.gray)
                         }
                         .disabled(true)
                     }
-                    
-                    
+
                     TextField("Player Name", text: $newPlayerUID)
                         .disableAutocorrection(true)
                         .autocapitalization(.allCharacters)
-                        .onChange(of: newPlayerUID) { oldValue, newValue in
-                            if !newValue.isEmpty {
-                                if allPlayers.contains(where: { $0.id == newPlayerUID.trimmingCharacters(in: .whitespacesAndNewlines) }) {
-                                    isAllPlayersUnique = false
-                                } else {
-                                    isAllPlayersUnique = true
-                                }
-                                
-                                if allUsers.contains(where: { $0.id == newPlayerUID.trimmingCharacters(in: .whitespacesAndNewlines)}) {
-                                    isAllPlayersExisting = true
-                                } else {
-                                    isAllPlayersExisting = false
-                                }
-                            }
+                        .onChange(of: newPlayerUID) { _, newValue in
+                            validatePlayerInput(newValue)
                         }
 
                     ForEach(allPlayers.reversed()) { player in
-                        VStack {
-                            Text("\(player.id)")
-                                .swipeActions(edge: .trailing, allowsFullSwipe: true) {
-                                    Button(role: .destructive) {
-                                        if let index = allPlayers.firstIndex(where: { $0.id == player.id }) {
-                                            allPlayers.remove(at: index)
-                                        }
-                                        
-                                    } label: {
-                                        Label("Delete", systemImage: "trash")
-                                    }
+                        Text(player.id)
+                            .swipeActions(edge: .trailing, allowsFullSwipe: true) {
+                                Button(role: .destructive) {
+                                    removePlayer(player)
+                                } label: {
+                                    Label("Delete", systemImage: "trash")
                                 }
-                        }
+                            }
                     }
                 }
-                
+
                 Section {
                     HStack {
-                        Text("Buy in ($)")
-                            .font(.headline)
+                        Text("Buy in ($)").font(.headline)
                         Text("5")
                         Spacer()
                         Text("Dollars")
                     }
-                    
                 }
-                
+
                 // Save button
                 Section {
-                    Button("Create Game") {
-                    let uid = UUID().uuidString
-                    let totalPot = Double(allPlayers.count) * 5.0
-                    let gameCode = String(uid.prefix(3) + uid.suffix(3))
-                        
-                    newGame = Game(
-                        isActive: true,
-                        id: uid,
-                        gameCode: gameCode,
-                        totalPot: totalPot,
-                        date: Date(),
-                        players: allPlayers,
-                        transactions: []
-                    )
-                    firestoreService.createGame(game: newGame) { error in
-                        if let error = error {
-                            print("Error saving game: \(error.localizedDescription)")
-                        }
-                    }
-                    }
-                    .disabled(allPlayers.count < 2)
-                    .background(
-                        NavigationLink(destination: OngoingGameView(game: newGame)) {}
-                            .opacity(0)
-                            .disabled(allPlayers.count < 2)
-                    )
+                    Button("Create Game", action: createGame)
+                        .disabled(allPlayers.count < 2)
                 }
             }
             .navigationTitle("Create Game")
-        }
-        .onAppear() {
-            firestoreService.fetchUsers { users in
-                self.allUsers = users
+            .onAppear(perform: fetchUsers)
+            .navigationDestination(isPresented: $navigateToGame) {
+                OngoingGameView(game: newGame, allUsers: allUsers)
             }
+        }
+    }
+
+    // MARK: - Helper Functions
+    private func quickAddFavorites() {
+        let favorites = ["LAKSH", "ATHARV", "SAHAJ", "USMAAN", "AREEB", "SAIF", "ANIRUDH", "LAKSHYA"]
+        allPlayers = favorites.map { Player(id: $0, buyIn: 5, cashOut: 0, profit: -5.00) }
+    }
+
+    private func createNewUser() {
+        newPlayerUID = newPlayerUID.uppercased().trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !newPlayerUID.isEmpty else { return }
+
+        firestoreService.createUser(id: newPlayerUID) { _ in }
+        allUsers.append(User(id: newPlayerUID, totalProfit: 0, isFavorite: false, profitData: [0], totalWins: 0, timePlayed: 0, totalBuyIn: 0))
+        allPlayers.append(Player(id: newPlayerUID, buyIn: 5, cashOut: 0, profit: -5.00))
+        newPlayerUID = ""
+        isAllPlayersExisting = true
+    }
+
+    private func addPlayer() {
+        newPlayerUID = newPlayerUID.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !newPlayerUID.isEmpty else { return }
+
+        let newPlayer = Player(id: newPlayerUID, buyIn: 5, cashOut: 0, profit: -5.00)
+        allPlayers.append(newPlayer)
+        newPlayerUID = ""
+    }
+
+    private func validatePlayerInput(_ input: String) {
+        newPlayerUID = input.uppercased()
+        isAllPlayersUnique = !allPlayers.contains { $0.id == newPlayerUID.trimmingCharacters(in: .whitespacesAndNewlines) }
+        isAllPlayersExisting = allUsers.contains { $0.id == newPlayerUID.trimmingCharacters(in: .whitespacesAndNewlines) }
+    }
+
+    private func removePlayer(_ player: Player) {
+        allPlayers.removeAll { $0.id == player.id }
+    }
+
+    private func createGame() {
+        let uid = UUID().uuidString
+        let totalPot = Double(allPlayers.count) * 5.0
+        let gameCode = String(uid.prefix(3) + uid.suffix(3))
+
+        newGame = Game(
+            isActive: true,
+            id: uid,
+            gameCode: gameCode,
+            totalPot: totalPot,
+            date: Date(),
+            players: allPlayers,
+            events: []
+        )
+
+        firestoreService.createGame(game: newGame) { error in
+            if error == nil {
+                navigateToGame = true
+            } else {
+                print("Error saving game: \(error!.localizedDescription)")
+            }
+        }
+    }
+
+    private func fetchUsers() {
+        firestoreService.fetchUsers { users in
+            allUsers = users
         }
     }
 }

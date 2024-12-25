@@ -31,15 +31,16 @@ struct Game: Identifiable, Codable {
     var totalPot: Double
     var date: Date
     var players: [Player]
-    var transactions: [Transaction]
+    var events: [Transaction]
 }
 
 struct Transaction: Identifiable, Codable {
-    var id: String
-    var time: Date
-    var type: String // "buyIn" or "cashOut"
-    var userId: String
-    var amount: Double
+    var id: Int
+    var time: Date = Date()
+    var description: String
+    var from: String
+    var to: String
+    var amount: String
 }
 
 struct GameData {

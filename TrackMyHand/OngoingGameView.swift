@@ -8,12 +8,41 @@
 import SwiftUI
 
 struct OngoingGameView: View {
-    @ObservedObject var timer = MyTimer()
-    @State var isClockStarted: Bool = false
     
-    var game: Game
+    @ObservedObject private var timer = MyTimer()
+    @State private var isClockStarted: Bool = false
+    @StateObject private var firestoreService = FirestoreService()
+    @State var transactionFrom: String = ""
+    @State var transactionTo: String = ""
+    @State var transactionAmount: String = ""
+    @State private var isMakingTransaction: Bool = false
+    
+    @State var game: Game
+    var allUsers: [User]
+    
     var body: some View {
-        ScrollView {
+        ScrollView(showsIndicators: false) {
+            RoundedRectangle(cornerRadius: 10)
+                .frame(height: 30)
+                .foregroundStyle(.gray).opacity(0.2)
+                .overlay(
+                    ZStack {
+                        HStack {
+                            Text("Game Code")
+                                .foregroundStyle(.orange)
+                                .bold()
+                                .font(.system(size: 12))
+                            Spacer()
+                        }
+                        .padding(.leading)
+                        
+                        Text(game.gameCode)
+                            .foregroundStyle(.orange)
+                            .bold()
+                            .font(.system(size: 12))
+                    }
+                )
+            
             RoundedRectangle(cornerRadius: 10)
                 .frame(height: 100)
                 .foregroundStyle(.gray).opacity(0.2)
@@ -23,6 +52,16 @@ struct OngoingGameView: View {
                         .bold()
                         .font(.system(size: 60))
                 )
+                .onAppear {
+                    if !(game.players.contains(where: { $0.id == "BANK" })) {
+                        game.players.insert(Player(id: "BANK", buyIn: 10000, cashOut: 10000, profit: 0), at: 0)
+                    }
+                    for player in game.players {
+                        game.events.append(Transaction(id: game.events.count, description: "Initial BuyIn", from: "BANK", to: player.id, amount: "5.00"))
+                    }
+                    transactionFrom = game.players.first!.id
+                    transactionTo = game.players.first!.id
+                }
             
             HStack {
                 Text("Total Pot ($)")
@@ -38,83 +77,298 @@ struct OngoingGameView: View {
             .padding(.horizontal)
             .background(RoundedRectangle(cornerRadius: 10).fill(Color.gray.opacity(0.2)))
             
-            if (!isClockStarted) {
-                Button(action: {
-                    isClockStarted = true
-                    timer.start()
-                }, label: {
-                    RoundedRectangle(cornerRadius: 10)
-                        .foregroundStyle(timer.secondsElapsed > 0 ? .orange : .gray).opacity(0.2)
-                        .frame(height: 75)
-                        .overlay(content: {
-                            Text(timer.secondsElapsed > 0 ? "Resume Game" : "Start Game")
-                                .foregroundStyle(.orange)
-                                .font(.system(size: 18, weight: .semibold))
-                        })
-                })
-            } else {
-                HStack {
-                    Button(action: {
-                        isClockStarted = false
-                        timer.stop()
-                    }, label: {
-                        RoundedRectangle(cornerRadius: 10)
-                            .foregroundStyle(.red).opacity(0.2)
-                            .frame(height: 75)
-                            .overlay(content: {
-                                Text("Pause Game")
-                                    .foregroundStyle(.red)
-                                    .font(.system(size: 18, weight: .semibold))
-                            })
-                    })
+            if (isMakingTransaction) {
+                VStack(alignment: .leading) {
+                    VStack {
+                        // Transaction Pickers
+                        HStack(alignment: .center) {
+                            Menu {
+                                Picker("From", selection: $transactionFrom) {
+                                    ForEach(game.players, id: \.self.id) { player in
+                                        Text(player.id)
+                                            .font(.subheadline)
+                                            .lineLimit(1)
+                                    }
+                                }
+                            } label: {
+                                Text(transactionFrom)
+                                    .lineLimit(1)
+                            }
+                            Spacer()
+                            Image(systemName: "arrow.right")
+                                .foregroundStyle(.gray)
+                                .frame(alignment: .bottom)
+                            Spacer()
+                            Menu {
+                                Picker("From", selection: $transactionTo) {
+                                    ForEach(game.players, id: \.self.id) { player in
+                                        Text(player.id)
+                                            .font(.subheadline)
+                                            .lineLimit(1)
+                                    }
+                                }
+                            } label: {
+                                Text(transactionTo)
+                                    .lineLimit(1)
+                            }
+                            Divider()
+                                .padding(.leading)
+                            HStack {
+                                TextField("Transaction Amount", text: $transactionAmount, prompt: Text("Amount"))
+                                    .keyboardType(.decimalPad)
+                                Text("$")
+                            }
+                            .frame(width: 80)
+                        }
+                        .padding()
+                    }
+                    .background {
+                        RoundedRectangle(cornerRadius: 8)
+                            .foregroundStyle(.gray).opacity(0.2)
+                    }
                     
-                    Button(action: {
+                    // Button Bar
+                    HStack {
+                        Button(action: {
+                            isMakingTransaction = false
+                        }, label: {
+                            RoundedRectangle(cornerRadius: 8)
+                                .foregroundStyle(.red).opacity(0.2)
+                                .frame(height: 50)
+                                .overlay(content: {
+                                    Text("Cancel")
+                                        .font(.subheadline)
+                                        .foregroundStyle(.red)
+                                })
+                        })
                         
+                        Button(action: {
+                            let desc = "\(transactionFrom) to \(transactionTo)"
+                            let formattedAmount = String(format: "%.2f", Double(transactionAmount) ?? 0.0).trimmingCharacters(in: .whitespacesAndNewlines)
+                            let event = Transaction(id: game.events.count, description: desc, from: transactionFrom, to: transactionTo, amount: formattedAmount)
+                            logEvent(newEvent: event)
+                            isMakingTransaction = false
+                            transactionAmount = ""
+                        }, label: {
+                            RoundedRectangle(cornerRadius: 8)
+                                .foregroundStyle(.blue).opacity(0.2)
+                                .frame(height: 50)
+                                .overlay(content: {
+                                    Text("Confirm")
+                                        .font(.subheadline)
+                                        .foregroundStyle(.blue)
+                                })
+                        })
+                        .disabled((transactionFrom == transactionTo) || (transactionAmount == ""))
+                    }
+                }
+                
+            } else {
+                if (!isClockStarted) {
+                    Button(action: {
+                        isClockStarted = true
+                        timer.start()
                     }, label: {
                         RoundedRectangle(cornerRadius: 10)
-                            .foregroundStyle(.green).opacity(0.2)
-                            .frame(height: 75)
+                            .foregroundStyle(timer.secondsElapsed > 0 ? .orange : .gray).opacity(0.2)
+                            .frame(height: 70)
                             .overlay(content: {
-                                Text("Transaction")
-                                    .foregroundStyle(.green)
+                                Text(timer.secondsElapsed > 0 ? "Resume Game" : "Start Game")
+                                    .foregroundStyle(.orange)
                                     .font(.system(size: 18, weight: .semibold))
                             })
                     })
+                } else {
+                    HStack {
+                        Button(action: {
+                            isClockStarted = false
+                            timer.stop()
+                        }, label: {
+                            RoundedRectangle(cornerRadius: 10)
+                                .foregroundStyle(.red).opacity(0.2)
+                                .frame(height: 70)
+                                .overlay(content: {
+                                    Text("Pause Game")
+                                        .foregroundStyle(.red)
+                                        .font(.system(size: 18, weight: .semibold))
+                                })
+                        })
+                        
+                        Button(action: {
+                            isMakingTransaction = true
+                        }, label: {
+                            RoundedRectangle(cornerRadius: 10)
+                                .foregroundStyle(.green).opacity(0.2)
+                                .frame(height: 70)
+                                .overlay(content: {
+                                    Text("Transaction")
+                                        .foregroundStyle(.green)
+                                        .font(.system(size: 18, weight: .semibold))
+                                })
+                        })
+                    }
                 }
             }
             
             Section(header: HStack {
                 Text("Players (\(game.players.count))")
-                    .font(.subheadline)
-                    .foregroundStyle(.gray)
-                Spacer()
-                Text("Buy In ($)")
-                    .font(.subheadline)
-                    .foregroundStyle(.gray)
-                
-            }.padding(.top, 10)) {
-                ForEach(game.players) { player in
-                    VStack {
-                        Divider()
-                        HStack {
-                            Text("\(player.id)")
-                                .font(.subheadline)
-                            Spacer()
-                            Text("\(player.buyIn, specifier: "%.2f")")
-                                .font(.subheadline)
-                                .bold()
-                                .foregroundStyle(.orange)
+                        .font(.subheadline)
+                        .foregroundStyle(.gray)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                    Text("Buy In ($)")
+                        .font(.subheadline)
+                        .foregroundStyle(.gray)
+                        .frame(maxWidth: .infinity, alignment: .center)
+                    Text("Profit ($)")
+                        .font(.subheadline)
+                        .foregroundStyle(.gray)
+                        .frame(maxWidth: .infinity, alignment: .trailing)
+            }
+                .padding(.horizontal)
+                .padding(.top, 10)) {
+                    ForEach(game.players) { player in
+                        if (player.id != "BANK") {
+                            PlayerDataRow(player: player)
                         }
-                        .padding(.vertical, 0.1)
-                        
                     }
-                    .padding(.horizontal)
-                }
                 Divider()
             }
             
+            PlayerManagementBar(game: $game, allUsers: allUsers)
+            
+            Section(header: HStack {
+                Text("Event Log")
+                    .font(.subheadline)
+                    .foregroundStyle(.gray)
+                Spacer()
+                Text("Exchanged ($)")
+                    .font(.subheadline)
+                    .foregroundStyle(.gray)
+                }
+                .padding(.bottom)
+                .frame(maxWidth: .infinity, alignment: .leading)
+            ) {
+                ForEach(game.events.reversed()) { event in
+                    HStack {
+                        Text("\(event.time.formatted(date: .omitted, time: .shortened))")
+                            .font(.subheadline)
+                            .foregroundStyle(.gray)
+                        Divider()
+                        Text("\(event.from)")
+                            .font(.subheadline)
+                            .lineLimit(1)
+                        Image(systemName: "arrow.right")
+                            .font(.subheadline)
+                            .foregroundColor(.gray)
+                        Text("\(event.to)")
+                            .font(.subheadline)
+                            .lineLimit(1)
+                        Spacer()
+                        Divider()
+                            .padding(.horizontal, 2)
+                        Text("\(event.amount)")
+                            .font(.subheadline)
+                            .bold()
+                            .foregroundColor(.orange)
+                            .frame(width: 60)
+                    }
+                }
+            }
+            
+        }
+        .padding(.horizontal)
+        .navigationBarBackButtonHidden(true)
+    }
+    
+    func logEvent(newEvent: Transaction) {
+        
+        if let playerIndex = game.players.firstIndex(where: { $0.id == newEvent.to }) {
+            game.players[playerIndex].profit -= Double(newEvent.amount)!
+        }
+        
+        if let playerIndex = game.players.firstIndex(where: { $0.id == newEvent.from }) {
+            game.players[playerIndex].profit += Double(newEvent.amount)!
+        }
+        
+        game.events.append(newEvent)
+        print("Event logged: \(newEvent.description)")
+        firestoreService.updateGameOnEvent(game: game) { result in
+            if result != nil {
+                print("Game Updated")
+            }
+        }
+    }
+    
+}
+
+
+struct PlayerDataRow: View {
+    var player: Player
+    var body: some View {
+        var profitColor: Color {
+            if player.profit >= 0 {
+                .green
+            } else {
+                .red
+            }
+        }
+        
+        VStack {
+            Divider()
+            HStack {
+                Text("\(player.id)")
+                    .font(.subheadline)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                Text("\(player.buyIn, specifier: "%.2f")")
+                    .font(.subheadline)
+                    .bold()
+                    .foregroundStyle(.orange)
+                    .frame(maxWidth: .infinity, alignment: .center)
+                Text("\(player.profit, specifier: "%.2f")")
+                    .font(.subheadline)
+                    .bold()
+                    .foregroundStyle(profitColor)
+                    .frame(maxWidth: .infinity, alignment: .trailing)
+            }
+            .padding(.vertical, 0.1)
+        }
+        .padding(.horizontal)
+    }
+}
+
+
+struct PlayerManagementBar: View {
+    @StateObject private var firestoreService = FirestoreService()
+    @State private var isPlayerIdAlertShown: Bool = false
+    @State private var isNewPlayerAlertShown: Bool = false
+    @State private var playerId: String = ""
+    @State private var isDisabled: Bool = true
+    @Binding var game: Game
+    var allUsers: [User]
+    
+    func logEvent(newEvent: Transaction) {
+        
+        if let playerIndex = game.players.firstIndex(where: { $0.id == newEvent.to }) {
+            game.players[playerIndex].profit -= Double(newEvent.amount)!
+        }
+        
+        if let playerIndex = game.players.firstIndex(where: { $0.id == newEvent.from }) {
+            game.players[playerIndex].profit += Double(newEvent.amount)!
+        }
+        
+        game.events.append(newEvent)
+        print("Event logged: \(newEvent.description)")
+        firestoreService.updateGameOnEvent(game: game) { result in
+            if result != nil {
+                print("Game Updated")
+            }
+        }
+    }
+    
+    var body: some View {
+        HStack {
             Button(action: {
-                
+                isPlayerIdAlertShown = true
             }) {
                 HStack {
                     Label("Add Player", systemImage: "plus.circle")
@@ -122,18 +376,80 @@ struct OngoingGameView: View {
                         .padding()
                     Spacer()
                 }
+                .padding(.trailing)
             }
             .foregroundStyle(.orange)
             .background(RoundedRectangle(cornerRadius: 10)
                 .foregroundStyle(.gray)
                 .opacity(0.2)
             )
+            .alert("Add Player", isPresented: $isPlayerIdAlertShown) {
+                TextField("Enter player ID", text: $playerId)
+                    .autocorrectionDisabled(true)
+                    .onChange(of: playerId) { oldValue, newValue in
+                        playerId = newValue.uppercased().trimmingCharacters(in: .whitespacesAndNewlines)
+                        
+                        isDisabled = playerId.isEmpty ||
+                                     game.players.contains(where: { $0.id == playerId }) ||
+                                     !allUsers.contains(where: { $0.id == playerId })
+                    }
+                
+                Button("OK") {
+                    let newPlayer = Player(id: playerId, buyIn: 5.00, cashOut: 0.00, profit: -5.00)
+                    let transaction = Transaction(id: game.events.count, description: "Initial BuyIn", from: "BANK", to: playerId, amount: "5.00")
+                    logEvent(newEvent: transaction)
+                    game.players.append(newPlayer)
+                    game.totalPot += newPlayer.buyIn
+                    playerId = ""
+                }
+                .disabled(isDisabled)
+                
+                Button("Cancel", role: .cancel) {
+                    playerId = ""
+                }
+            }
             
+            Button(action: {
+                isNewPlayerAlertShown = true
+            }) {
+                Image(systemName: "person.crop.circle.fill.badge.plus")
+                    .foregroundStyle(.blue)
+                    .font(.system(size: 22))
+                    .frame(width: 50, height: 50)
+            }
+            .background(RoundedRectangle(cornerRadius: 10)
+                .foregroundStyle(.gray)
+                .opacity(0.2)
+            )
+            .alert("Create New Player", isPresented: $isNewPlayerAlertShown) {
+                TextField("Create player ID", text: $playerId)
+                    .autocorrectionDisabled(true)
+                    .onChange(of: playerId) { oldValue, newValue in
+                        playerId = newValue.uppercased().trimmingCharacters(in: .whitespacesAndNewlines)
+                    }
+                
+                Button("Create") {
+                    let newPlayer = Player(id: playerId, buyIn: 5.00, cashOut: 0.00, profit: 0.00)
+                    game.players.append(newPlayer)
+                    let transaction = Transaction(id: game.events.count, description: "Initial BuyIn", from: "BANK", to: playerId, amount: "5.00")
+                    logEvent(newEvent: transaction)
+                    game.totalPot += newPlayer.buyIn
+                    playerId = ""
+                    firestoreService.createUser(id: newPlayer.id) {_ in }
+                }
+                .disabled(playerId.isEmpty ||
+                          allUsers.contains(where: { $0.id == playerId }))
+                
+                Button("Cancel", role: .cancel) {
+                    playerId = ""
+                }
+            }
         }
-        .padding(.horizontal)
-        .navigationBarBackButtonHidden(true)
+        Divider()
+            .padding(.bottom, 10)
     }
 }
+
 
 class MyTimer : ObservableObject {
     @Published var hoursElapsed = 0
@@ -144,13 +460,13 @@ class MyTimer : ObservableObject {
     func start() {
         timer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { timer in
             self.secondsElapsed += 1
-            if self.secondsElapsed >= 60 {
-                if self.minutesElapsed >= 60 {
-                    self.hoursElapsed += 1
-                    self.minutesElapsed = 0
-                }
+            if self.secondsElapsed == 60 {
                 self.minutesElapsed += 1
                 self.secondsElapsed = 0
+            }
+            if self.minutesElapsed == 60 {
+                self.hoursElapsed += 1
+                self.minutesElapsed = 0
             }
         }
     }
@@ -161,5 +477,7 @@ class MyTimer : ObservableObject {
 }
 
 #Preview {
-    OngoingGameView(game: Game(isActive: true, id: "7B97E339-3EEF-4431-B6A7-85681B64D002", gameCode: "7B9002", totalPot: 40.0, date: Date(), players: [TrackMyHand.Player(id: "LAKSH", buyIn: 5.0, cashOut: 0.0, profit: 0.0), TrackMyHand.Player(id: "ATHARV", buyIn: 5.0, cashOut: 0.0, profit: 0.0), TrackMyHand.Player(id: "SAHAJ", buyIn: 5.0, cashOut: 0.0, profit: 0.0), TrackMyHand.Player(id: "USMAAN", buyIn: 5.0, cashOut: 0.0, profit: 0.0), TrackMyHand.Player(id: "AREEB", buyIn: 5.0, cashOut: 0.0, profit: 0.0), TrackMyHand.Player(id: "SAIF", buyIn: 5.0, cashOut: 0.0, profit: 0.0), TrackMyHand.Player(id: "ANIRUDH", buyIn: 5.0, cashOut: 0.0, profit: 0.0), TrackMyHand.Player(id: "LAKSHYA", buyIn: 5.0, cashOut: 0.0, profit: 0.0)], transactions: []))
+    OngoingGameView(game: Game(isActive: true, id: "7B97E339-3EEF-4431-B6A7-85681B64D002", gameCode: "7B9002", totalPot: 40.0, date: Date(), players: [TrackMyHand.Player(id: "LAKSH", buyIn: 5.0, cashOut: 0.0, profit: -5.0), TrackMyHand.Player(id: "ATHARV", buyIn: 5.0, cashOut: 0.0, profit: -5.0), TrackMyHand.Player(id: "SAHAJ", buyIn: 5.0, cashOut: 0.0, profit: -5.0), TrackMyHand.Player(id: "USMAAN", buyIn: 5.0, cashOut: 0.0, profit: -5.0), TrackMyHand.Player(id: "AREEB", buyIn: 5.0, cashOut: 0.0, profit: -5.0), TrackMyHand.Player(id: "SAIF", buyIn: 5.0, cashOut: 0.0, profit: -5.0), TrackMyHand.Player(id: "ANIRUDH", buyIn: 5.0, cashOut: 0.0, profit: -5.0), TrackMyHand.Player(id: "LAKSHYA", buyIn: 5.0, cashOut: 0.0, profit: -5.0)], events: []),
+                    
+                    allUsers: [TrackMyHand.User(id: "ANIRUDH", totalProfit: 30.0, isFavorite: false, profitData: [0.0, 10.0, 7.0, 14.5, 30.0], totalWins: 3, timePlayed: 3.4, totalBuyIn: 45.0), TrackMyHand.User(id: "VIBHAV", totalProfit: 0.0, isFavorite: false, profitData: [0.0], totalWins: 0, timePlayed: 0.0, totalBuyIn: 0.0), TrackMyHand.User(id: "USMAAN", totalProfit: 0.0, isFavorite: false, profitData: [0.0], totalWins: 0, timePlayed: 0.0, totalBuyIn: 0.0), TrackMyHand.User(id: "SIDAK", totalProfit: 0.0, isFavorite: false, profitData: [0.0], totalWins: 0, timePlayed: 0.0, totalBuyIn: 0.0), TrackMyHand.User(id: "SAIF", totalProfit: 0.0, isFavorite: false, profitData: [0.0], totalWins: 0, timePlayed: 0.0, totalBuyIn: 0.0), TrackMyHand.User(id: "SAHAJ", totalProfit: 0.0, isFavorite: false, profitData: [0.0], totalWins: 0, timePlayed: 0.0, totalBuyIn: 0.0), TrackMyHand.User(id: "LAKSHYA", totalProfit: 0.0, isFavorite: false, profitData: [0.0], totalWins: 0, timePlayed: 0.0, totalBuyIn: 0.0), TrackMyHand.User(id: "LAKSH", totalProfit: 0.0, isFavorite: false, profitData: [0.0], totalWins: 0, timePlayed: 0.0, totalBuyIn: 0.0), TrackMyHand.User(id: "ATHARV", totalProfit: 0.0, isFavorite: false, profitData: [0.0], totalWins: 0, timePlayed: 0.0, totalBuyIn: 0.0), TrackMyHand.User(id: "AREEB", totalProfit: 0.0, isFavorite: false, profitData: [0.0], totalWins: 0, timePlayed: 0.0, totalBuyIn: 0.0)])
 }

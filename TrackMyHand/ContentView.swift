@@ -19,6 +19,7 @@ struct ContentView: View {
     @State private var totalGames = 0
     
     
+    
     var body: some View {
         NavigationStack {
             List {
@@ -36,7 +37,7 @@ struct ContentView: View {
                                     .bold()
                                     .foregroundStyle(.black)
                                     .frame(width: 60, alignment: .trailing)
-                                    .padding(EdgeInsets.init(top: 1, leading: 10, bottom: 1, trailing: 5))
+                                    .padding(EdgeInsets.init(top: 1, leading: 5, bottom: 1, trailing: 5))
                                     .background(content: {
                                         RoundedRectangle(cornerRadius: CGFloat(5))
                                             .foregroundStyle(.green)

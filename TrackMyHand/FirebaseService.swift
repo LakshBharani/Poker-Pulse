@@ -10,7 +10,7 @@ import FirebaseFirestoreSwift
 
 class FirestoreService: ObservableObject {
     private let db = Firestore.firestore()
-    
+
     // Fetch all users
     func fetchUsers(completion: @escaping ([User]) -> Void) {
         db.collection("users")
@@ -131,4 +131,28 @@ class FirestoreService: ObservableObject {
             }
         }
     }
+    
+    // update game on event log
+    func updateGameOnEvent(game: Game, completion: @escaping (Error?) -> Void) {
+        let gameRef = db.collection("games").document(game.id)
+        
+        gameRef.getDocument { (document, error) in
+            if let error = error {
+                completion(error)
+                return
+            }
+            
+            if let document = document, document.exists {
+                do {
+                    try gameRef.setData(from: game)
+                    completion(nil)
+                } catch let error {
+                    completion(error)
+                }
+            } else {
+                completion(NSError(domain: "DocumentNotFound", code: 404, userInfo: nil))
+            }
+        }
+    }
+
 }
