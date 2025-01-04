@@ -13,7 +13,7 @@ struct User: Identifiable, Codable {
     var isFavorite: Bool
     var profitData: [Double]
     var totalWins: Int
-    var timePlayed: Double
+    var timePlayed: Int
     var totalBuyIn: Double
 }
 
@@ -27,6 +27,7 @@ struct Player: Identifiable, Codable {
 struct Game: Identifiable, Codable {
     var isActive: Bool
     var id: String
+    var timeElapsed: [Int]
     var gameCode: String
     var totalPot: Double
     var date: Date

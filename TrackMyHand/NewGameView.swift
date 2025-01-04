@@ -17,7 +17,7 @@ struct NewGameView: View {
     @State private var allUsers: [User] = []
     @StateObject private var firestoreService = FirestoreService()
     @State private var startGame: Bool = false
-    @State private var newGame: Game = Game(isActive: false, id: "", gameCode: "", totalPot: 0.0, date: Date(), players: [], events: [])
+    @State private var newGame: Game = Game(isActive: false, id: "", timeElapsed: [0, 0, 0], gameCode: "", totalPot: 0.0, date: Date(), players: [], events: [])
     @State private var navigateToGame: Bool = false
 
     // Game details
@@ -29,7 +29,7 @@ struct NewGameView: View {
         NavigationStack {
             Form {
                 // Section for player details
-                Section(header: Text("Players")) {
+                Section(header: Text("Players (\(allPlayers.count))")) {
                     if allPlayers.isEmpty && newPlayerUID.isEmpty {
                         Button(action: quickAddFavorites) {
                             Label("Quick Add", systemImage: "star.fill")
@@ -89,6 +89,9 @@ struct NewGameView: View {
 
                     ForEach(allPlayers.reversed()) { player in
                         Text(player.id)
+                            .font(.subheadline)
+                            .foregroundStyle(.orange)
+                            .bold()
                             .swipeActions(edge: .trailing, allowsFullSwipe: true) {
                                 Button(role: .destructive) {
                                     removePlayer(player)
@@ -99,20 +102,21 @@ struct NewGameView: View {
                     }
                 }
 
-                Section {
-                    HStack {
-                        Text("Buy in ($)").font(.headline)
-                        Text("5")
-                        Spacer()
-                        Text("Dollars")
-                    }
+                HStack {
+                    Text("Buy in ($)")
+                        .foregroundStyle(.white).opacity(0.7)
+                    Divider()
+                        .padding(.horizontal, 5)
+                    Text("5")
+                        .bold()
+                    Spacer()
+                    Text("Dollars")
+                        .foregroundStyle(.white).opacity(0.7)
                 }
 
-                // Save button
-                Section {
-                    Button("Create Game", action: createGame)
-                        .disabled(allPlayers.count < 2)
-                }
+            // Save button
+                Button("Create Game", action: createGame)
+                    .disabled(allPlayers.count < 2)
             }
             .navigationTitle("Create Game")
             .onAppear(perform: fetchUsers)
@@ -166,6 +170,7 @@ struct NewGameView: View {
         newGame = Game(
             isActive: true,
             id: uid,
+            timeElapsed: [0, 0, 0],
             gameCode: gameCode,
             totalPot: totalPot,
             date: Date(),

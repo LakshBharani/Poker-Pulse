@@ -19,16 +19,18 @@ struct UserDetails: View {
     var body: some View {
         let sessions = String(user.profitData.count - 1)
         let profit_per_session = String(format: "%.2f", user.totalProfit / Double(user.profitData.count - 1))
-        let profit_per_hour = String(format: "%.2f", user.totalProfit / Double(user.timePlayed))
+        let profit_per_min = String(format: "%.2f", user.totalProfit / Double(user.timePlayed))
         let winRate = String(format: "%.0f", Double(user.totalWins) / Double(user.profitData.count - 1) * 100)
         let timePlayed = String(user.timePlayed)
         let averageBuyIn = String(format: "%.2f", user.totalBuyIn / Double(user.profitData.count - 1))
+        let screenGradient = user.totalProfit >= 0 ? [Color.green.opacity(0.25), Color.black] : [Color.red.opacity(0.25), Color.black]
         
         NavigationView {
             ScrollView {
                 VStack(alignment: .leading, spacing: 10) {
                     HStack {
                         Text("Activity Summary")
+                            .foregroundColor(.white).opacity(0.7)
                             .font(.title2)
                             .bold()
                             .padding(.bottom)
@@ -42,13 +44,18 @@ struct UserDetails: View {
                         
                         HStack {
                             Text("All Time ($)")
+                                .font(.system(size: 16))
+                                .foregroundColor(.white).opacity(0.7)
                             Divider()
                                 .padding(.horizontal)
                             Spacer()
-                            Text("\(user.totalProfit, specifier: "%.2f")")
-                                .font(.title2)
-                                .bold()
-                                .foregroundStyle(getProfitColor(profit: user.totalProfit))
+                            HStack {
+                                Text("\(user.totalProfit >= 0 ? "+" : "-") \(abs(user.totalProfit), specifier: "%.2f")")
+                                    .font(.title2)
+                                    .bold()
+                                    .foregroundStyle(getProfitColor(profit: user.totalProfit))
+                                
+                            }
                         }
                         .padding(.vertical, 10)
                         .padding(.horizontal)
@@ -57,9 +64,9 @@ struct UserDetails: View {
                         
                         LazyVGrid(columns: columns, spacing: 10) {
                             createInfoBox(title: "Sessions", value: sessions)
-                            createReactiveInfoBox(title: "Profit / Session", value: profit_per_session)
-                            createInfoBox(title: "Hours Played", value: timePlayed)
-                            createReactiveInfoBox(title: "Profit / Hour", value: profit_per_hour)
+                            createReactiveInfoBox(title: "\(user.totalProfit >= 0 ? "Profit" : "Loss") / Session", value: profit_per_session)
+                            createInfoBox(title: "Minutes Played", value: timePlayed)
+                            createReactiveInfoBox(title: "\(user.totalProfit >= 0 ? "Profit" : "Loss") / Minute", value: profit_per_min)
                             createInfoBox(title: "Win Rate (%)", value: "\(winRate)%")
                             createInfoBox(title: "Avg. BuyIn", value: averageBuyIn)
                         }
@@ -71,6 +78,14 @@ struct UserDetails: View {
                 }
                 .padding(.vertical)
             }
+            .background(
+                LinearGradient(
+                    gradient: Gradient(colors: screenGradient),
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+                .edgesIgnoringSafeArea(.all)
+            )
             .navigationTitle("\(user.id)")
         }
     }
@@ -89,6 +104,15 @@ struct UserDetails: View {
             )
             
             .foregroundStyle(getCurveGradient(profit: user.totalProfit))
+        }
+        .chartXAxisLabel(position: .bottom, alignment: .center) {
+            Text("Session Number")
+                .foregroundColor(.white).opacity(0.7)
+            
+        }
+        .chartYAxisLabel(position: .leading, alignment: .center) {
+            Text("Net Profit")
+                .foregroundColor(.white).opacity(0.7)
         }
         .chartLegend(position: .top, alignment: .leading)
         .chartXScale(domain: 0...(user.profitData.count - 1))
@@ -111,12 +135,10 @@ struct UserDetails: View {
     }
     
     func getProfitColor(profit: Double) -> Color {
-        if (profit > 0) {
+        if (profit >= 0) {
             return Color.green
-        } else if (profit < 0) {
-            return Color.red
         } else {
-            return Color.white
+            return Color.red
         }
     }
     
@@ -157,7 +179,7 @@ struct UserDetails: View {
         VStack(alignment: .leading, spacing: 10) {
             Text(title)
                 .font(.system(size: 16))
-                .foregroundColor(.secondary)
+                .foregroundColor(.white).opacity(0.7)
             Divider()
             Text(value.replacingOccurrences(of: "-", with: ""))
                 .font(.system(size: 30))
@@ -173,7 +195,7 @@ struct UserDetails: View {
         VStack(alignment: .leading, spacing: 10) {
             Text(title)
                 .font(.system(size: 16))
-                .foregroundColor(.secondary)
+                .foregroundColor(.white).opacity(0.7)
             Divider()
             if (Double(value)! > 0) {
                 Text(value)
@@ -200,5 +222,5 @@ struct UserDetails: View {
 
 
 #Preview {
-    UserDetails(user: User(id: "LAKSH", totalProfit: -120, isFavorite: false, profitData: [0], totalWins: 0, timePlayed: 10, totalBuyIn: 0))
+    UserDetails(user: User(id: "LAKSH", totalProfit: -120, isFavorite: false, profitData: [0, -120], totalWins: 0, timePlayed: 10, totalBuyIn: 10))
 }

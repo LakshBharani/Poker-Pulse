@@ -7,6 +7,7 @@
 
 import FirebaseFirestore
 import FirebaseFirestoreSwift
+import SwiftUICore
 
 class FirestoreService: ObservableObject {
     private let db = Firestore.firestore()
@@ -117,15 +118,7 @@ class FirestoreService: ObservableObject {
                 return
             }
             
-            if let document = document, document.exists {
-                // Update existing document
-                userRef.updateData([
-                    "totalProfit": FieldValue.increment(profit)
-                ]) { error in
-                    completion(error)
-                }
-            } else {
-                // Set data for a new document
+            if let document = document, !document.exists {
                 print("Creating new user...")
                 self.createUser(id: userId) { _ in }
             }
@@ -154,5 +147,77 @@ class FirestoreService: ObservableObject {
             }
         }
     }
-
+    
+    // update ingame clock in db
+    func updateIngameClock(game: Game, completion: @escaping (Error?) -> Void) {
+            let db = Firestore.firestore()
+            let gameRef = db.collection("games").document(game.id)
+            
+            gameRef.getDocument { (document, error) in
+                if let error = error {
+                    completion(error)
+                    return
+                }
+                
+                if let document = document, document.exists {
+                    gameRef.updateData([
+                        "timeElapsed": game.timeElapsed
+                    ]) { error in
+                        completion(error)
+                    }
+                }
+            }
+        }
+    
+    func updateGameStatusOnEnd(game: Game, completion: @escaping (Error?) -> Void) {
+        let db = Firestore.firestore()
+        let gameRef = db.collection("games").document(game.id)
+        
+        if game.timeElapsed == [0, 0, 0] {
+            gameRef.delete { error in
+                completion(error)
+            }
+            return
+        }
+        
+        gameRef.getDocument { (document, error) in
+            if let error = error {
+                completion(error)
+                return
+            }
+            
+            if let document = document, document.exists {
+                gameRef.updateData([
+                    "isActive": false
+                ]) { error in
+                    completion(error)
+                }
+            }
+        }
+    }
+    
+    func updateUserStatsOnGameEnd(game: Game, completion: @escaping (Error?) -> Void) async {
+        let db = Firestore.firestore()
+        let usersRef = db.collection("users")
+        let timePlayed = Double(game.timeElapsed[0] * 60 + game.timeElapsed[1] + (game.timeElapsed[2] > 30 ? 1 : 0))
+        
+        for player in game.players {
+            do {
+                let userData = try await usersRef.document(player.id).getDocument(as: User.self)
+                try await usersRef.document(player.id).updateData([
+                    "totalBuyIn": FieldValue.increment(player.buyIn),
+                    "totalProfit": FieldValue.increment(player.profit),
+                    "profitData": userData.profitData + [userData.profitData.last! + player.profit],
+                    "timePlayed": FieldValue.increment(timePlayed),
+                    "totalWins": FieldValue.increment(player.profit > 0 ? 1 : 0.0)
+                ])
+                
+            } catch {
+                completion(error)
+                return
+            }
+        }
+        completion(nil)
+    }
+    
 }

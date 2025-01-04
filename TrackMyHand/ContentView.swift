@@ -19,67 +19,87 @@ struct ContentView: View {
     @State private var totalGames = 0
     
     
-    
     var body: some View {
         NavigationStack {
-            List {
-                Section(header: Text("Leaderboard (\(totalUsers))")) {
-                    ForEach(users) { user in
-                        HStack {
-                            VStack(alignment: .leading) {
-                                Text(user.id)
-                                    .font(.headline)
-                                    .foregroundStyle(colorScheme == .dark ? .orange : .black)
-                                Text("Games Played: \(user.profitData.count - 1)")
-                                    .padding(.bottom, 2)
-                                Text("+\(user.totalProfit, specifier: "%.2f")")
-                                    .font(.subheadline)
-                                    .bold()
-                                    .foregroundStyle(.black)
-                                    .frame(width: 60, alignment: .trailing)
-                                    .padding(EdgeInsets.init(top: 1, leading: 5, bottom: 1, trailing: 5))
-                                    .background(content: {
-                                        RoundedRectangle(cornerRadius: CGFloat(5))
-                                            .foregroundStyle(.green)
-                                    })
-                            }
-                            
-                            Spacer()
-                            
-                            Image(systemName: "medal.fill")
-                                .font(.title)
-                                .foregroundStyle(getBadgeColor(index: users.firstIndex(where: { $0.id == user.id })!))
-                        }
-                        .background(
-                            NavigationLink(destination: UserDetails(user: user)) {}
-                                .opacity(0)
-                        )
-                    }
-                    NavigationLink(destination: AllUsers()) {
-                        Button("Show More") {}
-                    }
-                    .disabled(users.isEmpty)
-                }
+            ZStack {
+                LinearGradient(
+                    gradient: Gradient(colors: [.green.opacity(0.25), .black]),
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+                .edgesIgnoringSafeArea(.all)
                 
-                Section(header: Text("Games (\(totalGames))")) {
-                    NavigationLink(destination: NewGameView()) {
-                        Button("New Game") {}
+                List {
+                    Section(header: Text("Leaderboard (\(totalUsers))")) {
+                        ForEach(users) { user in
+                            HStack {
+                                VStack(alignment: .leading) {
+                                    Text(user.id)
+                                        .font(.headline)
+                                        .foregroundStyle(colorScheme == .dark ? .orange : .black)
+                                    Text("Games Played : \(user.profitData.count - 1)")
+                                        .foregroundColor(.white).opacity(0.7)
+                                        .bold()
+                                        .font(.system(size: 14))
+                                    Text("\(user.totalProfit >= 0 ? "+" : "-") \(abs(user.totalProfit), specifier: "%.2f")")
+                                        .font(.system(size: 14))
+                                        .bold()
+                                        .foregroundStyle(user.totalProfit >= 0 ? .green : .red)
+                                        .padding(EdgeInsets.init(top: 1, leading: 5, bottom: 1, trailing: 5))
+                                        .background(content: {
+                                            RoundedRectangle(cornerRadius: CGFloat(5))
+                                                .foregroundStyle(user.totalProfit >= 0 ? .green.opacity(0.2) : .red.opacity(0.2))
+                                        })
+                                }
+                                
+                                Spacer()
+                                
+                                Image(systemName: "medal.fill")
+                                    .font(.title)
+                                    .foregroundStyle(getBadgeColor(index: users.firstIndex(where: { $0.id == user.id })!))
+                            }
+                            .background(
+                                NavigationLink(destination: UserDetails(user: user)) {}
+                                    .opacity(0)
+                            )
+                        }
+                        NavigationLink(destination: AllUsers()) {
+                            Button("Show More") {}
+                        }
+                        .disabled(users.isEmpty)
                     }
-                    ForEach(games) { game in
-                        HStack {
-                            VStack(alignment: .leading) {
-                                Text("\(game.date.formatted(date: .long, time: .shortened))")
-                                    .fontWeight(.semibold)
-                                Text("Players : \(game.players.count)")
-                                    .font(.callout)
-                                let totalPot = game.players.reduce(0) { $0 + $1.buyIn }
-                                Text("Total Pot: \(totalPot, specifier: "%.2f")")
-                                    .font(.callout)
+                    
+                    Section(header: Text("Games (\(totalGames))")) {
+                        NavigationLink(destination: NewGameView()) {
+                            Button("New Game") {}
+                        }
+                        ForEach(games) { game in
+                            HStack {
+                                VStack(alignment: .leading, spacing: 4) {
+                                    Text("\(game.gameCode)")
+                                        .fontWeight(.semibold)
+                                        .foregroundStyle(.orange)
+                                    Text("\(game.date.formatted(date: .long, time: .shortened))")
+                                        .foregroundColor(.white).opacity(0.7)
+                                        .bold()
+                                        .font(.system(size: 14))
+                                    Text("Players : \(game.players.count - 1)")
+                                        .foregroundColor(.white).opacity(0.7)
+                                        .bold()
+                                        .font(.system(size: 14))
+                                    Text("Total Pot : \(game.totalPot, specifier: "%.2f")")
+                                        .foregroundColor(.white).opacity(0.7)
+                                        .bold()
+                                        .font(.system(size: 14))
+                                }
                             }
                         }
                     }
                 }
             }
+            .navigationBarBackButtonHidden(true)
+            .scrollIndicators(.hidden)
+            .scrollContentBackground(.hidden)
             .refreshable {
                 reloadData()
             }
