@@ -30,6 +30,7 @@ struct Game: Identifiable, Codable {
     var timeElapsed: [Int]
     var gameCode: String
     var totalPot: Double
+    var cashOut: Double
     var date: Date
     var players: [Player]
     var events: [Transaction]

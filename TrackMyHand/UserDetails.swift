@@ -7,9 +7,13 @@
 
 import SwiftUI
 import Charts
+import CoreML
+import Foundation
 
 struct UserDetails: View {
     @State private var cumulativeYData: [Double] = []
+    @State var period: Int = 1
+
     var user: User
     let columns = [
         GridItem(.flexible()),
@@ -41,6 +45,17 @@ struct UserDetails: View {
                     if (user.profitData.count > 1) {
                         // widget showing profit over time
                         chartWidget()
+                            .onAppear() {
+                                if user.profitData.count < 4 {
+                                    period = 1
+                                } else if user.profitData.count < 10 {
+                                    period = 5
+                                } else {
+                                    period = user.profitData.count < 4 ? 1 : Int(user.profitData.count / 5)
+                                }
+                                
+                            }
+                        
                         
                         HStack {
                             Text("All Time ($)")
@@ -88,38 +103,167 @@ struct UserDetails: View {
             )
             .navigationTitle("\(user.id)")
         }
+        .scrollIndicators(.hidden)
+    }
+    
+    
+    // Simple Moving Average function
+    func simpleMovingAverage(data: [Double], period: Int) -> [Double] {
+        var smaValues = [Double]()
+        
+        for i in 0..<data.count {
+            if i >= period - 1 {
+                let window = data[(i - period + 1)...i]
+                let sma = window.reduce(0, +) / Double(period)
+                smaValues.append(sma)
+            } else {
+                smaValues.append(0)
+            }
+        }
+        
+        return smaValues
+    }
+    
+    func generateProfits(from netProfits: [Double]) -> [Double] {
+        var profits: [Double] = []
+        
+        for i in 1..<netProfits.count {
+            let profit = netProfits[i] - netProfits[i - 1]
+            profits.append(profit)
+        }
+        
+        return profits
     }
     
     func chartWidget() -> some View {
-        return Chart(0..<user.profitData.count, id: \.self) { session in
-            LineMark(
-                x: .value("Session", session),
-                y: .value("Net Profit", user.profitData[session])
-            )
-            .foregroundStyle(getProfitColor(profit: user.totalProfit))
-            
-            AreaMark(
-                x: .value("Session", session),
-                y: .value("Net Profit", user.profitData[session])
-            )
-            
-            .foregroundStyle(getCurveGradient(profit: user.totalProfit))
+        let profitData = user.profitData
+        let smaValues = simpleMovingAverage(data: profitData, period: period)
+        
+        return VStack {
+            Chart {
+                // Plot main line and area chart
+                ForEach(0..<user.profitData.count, id: \.self) { session in
+                    AreaMark(
+                        x: PlottableValue.value("Session 1", session),
+                        y: PlottableValue.value("Net Profit", user.profitData[session])
+                    )
+                    .foregroundStyle(getCurveGradient(profit: user.totalProfit))
+                    
+                    LineMark(
+                        x: PlottableValue.value("Session 1", session),
+                        y: PlottableValue.value("Net Profit", user.profitData[session]),
+                        series: .value("Line", "One")
+                    )
+                    .foregroundStyle(getProfitColor(profit: user.totalProfit))
+                    
+                    PointMark(
+                        x: PlottableValue.value("Session 1", session),
+                        y: PlottableValue.value("Net Profit", user.profitData[session]))
+                    .foregroundStyle(getProfitColor(profit: user.totalProfit))
+                    .symbolSize(20)
+                    
+                    LineMark(
+                        x: PlottableValue.value("Session 2", session),
+                        y: PlottableValue.value("Median", smaValues[session]),
+                        series: .value("Line", "Two")
+                    )
+                    .foregroundStyle(.white).opacity(0.7)
+                    .lineStyle(StrokeStyle(lineWidth: 2, dash: [5, 5]))
+                }
+                
+                RuleMark(y: .value("Break-Even", 0))
+                    .lineStyle(StrokeStyle(lineWidth: 1, dash: [1]))
+                    .foregroundStyle(.gray)
+                
+                
+            }
+            .chartOverlay { proxy in
+                GeometryReader { geometry in
+                    // Track user interaction
+                    TouchInteractionView(
+                        proxy: proxy,
+                        geometry: geometry,
+                        user: user,
+                        plotAreaFrame: CGRect()
+                    )
+                }
+            }
+            .chartXAxisLabel(position: .bottom, alignment: .center) {
+                Text("Session Number")
+                    .foregroundColor(.white).opacity(0.7)
+            }
+            .chartYAxisLabel(position: .leading, alignment: .center) {
+                Text("Net Profit")
+                    .foregroundColor(.white).opacity(0.7)
+            }
+            .chartLegend(position: .top, alignment: .leading)
+            .chartXScale(domain: 0...(user.profitData.count - 1))
+            .padding(.bottom)
+            .padding(.horizontal)
+            .frame(height: 300)
         }
-        .chartXAxisLabel(position: .bottom, alignment: .center) {
-            Text("Session Number")
-                .foregroundColor(.white).opacity(0.7)
-            
-        }
-        .chartYAxisLabel(position: .leading, alignment: .center) {
-            Text("Net Profit")
-                .foregroundColor(.white).opacity(0.7)
-        }
-        .chartLegend(position: .top, alignment: .leading)
-        .chartXScale(domain: 0...(user.profitData.count - 1))
-        .padding(.bottom)
-        .padding(.horizontal)
-        .frame(height: 300)
     }
+
+
+    struct TouchInteractionView: View {
+        let proxy: ChartProxy
+        let geometry: GeometryProxy
+        let user: User
+        let plotAreaFrame: CGRect
+
+        @State private var hoveredXValue: Int?
+        @State private var hoveredYValue: Double?
+        @State private var isTouching: Bool = false
+
+        var body: some View {
+            Rectangle()
+                .fill(Color.clear)
+                .contentShape(Rectangle()) // Enable interaction
+                .gesture(
+                    DragGesture()
+                        .onChanged { value in
+                            isTouching = true
+                            
+                            // Get X-axis value based on touch location
+                            if let xValue: Int = proxy.value(atX: value.location.x) {
+                                hoveredXValue = xValue
+                                
+                                // Get corresponding Y-axis value
+                                if xValue >= 0 && xValue < user.profitData.count {
+                                    hoveredYValue = user.profitData[xValue]
+                                }
+                            }
+                        }
+                        .onEnded { _ in
+                            isTouching = false
+                            hoveredXValue = nil
+                            hoveredYValue = nil
+                        }
+                )
+                .overlay {
+                    if let xValue = hoveredXValue, let yValue = hoveredYValue, isTouching {
+                        let resolvedFrame = geometry[proxy.plotFrame!]
+
+                        VStack(spacing: 5) {
+                            Text("Session: \(xValue)")
+                                .font(.caption)
+                                .foregroundColor(.white)
+                            Text("Net Profit: \(yValue, specifier: "%.2f")")
+                                .font(.caption)
+                                .foregroundColor(.white)
+                        }
+                        .padding(5)
+                        .background(Color.black.opacity(0.7))
+                        .cornerRadius(8)
+                        .position(
+                            x: resolvedFrame.minX + proxy.position(forX: xValue)!,
+                            y: resolvedFrame.minY + proxy.position(forY: yValue)!
+                        )
+                    }
+                }
+        }
+    }
+
     
     func errorbanner() -> some View {
         return HStack {

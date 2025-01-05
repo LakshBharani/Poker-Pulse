@@ -87,12 +87,17 @@ struct ContentView: View {
                                         .foregroundColor(.white).opacity(0.7)
                                         .bold()
                                         .font(.system(size: 14))
+                                        .font(.system(size: 14))
                                     Text("Total Pot : \(game.totalPot, specifier: "%.2f")")
                                         .foregroundColor(.white).opacity(0.7)
                                         .bold()
                                         .font(.system(size: 14))
                                 }
                             }
+                            .background(
+                                NavigationLink(destination: OngoingGameView(game: game, allUsers: users)) {}
+                                    .opacity(0)
+                            )
                         }
                     }
                 }

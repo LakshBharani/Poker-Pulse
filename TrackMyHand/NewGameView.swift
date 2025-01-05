@@ -17,7 +17,7 @@ struct NewGameView: View {
     @State private var allUsers: [User] = []
     @StateObject private var firestoreService = FirestoreService()
     @State private var startGame: Bool = false
-    @State private var newGame: Game = Game(isActive: false, id: "", timeElapsed: [0, 0, 0], gameCode: "", totalPot: 0.0, date: Date(), players: [], events: [])
+    @State private var newGame: Game = Game(isActive: false, id: "", timeElapsed: [0, 0, 0], gameCode: "", totalPot: 0.0, cashOut: 0, date: Date(), players: [], events: [])
     @State private var navigateToGame: Bool = false
 
     // Game details
@@ -173,6 +173,7 @@ struct NewGameView: View {
             timeElapsed: [0, 0, 0],
             gameCode: gameCode,
             totalPot: totalPot,
+            cashOut: 0,
             date: Date(),
             players: allPlayers,
             events: []
