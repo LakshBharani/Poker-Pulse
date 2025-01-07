@@ -17,7 +17,7 @@ struct NewGameView: View {
     @State private var allUsers: [User] = []
     @StateObject private var firestoreService = FirestoreService()
     @State private var startGame: Bool = false
-    @State private var newGame: Game = Game(isActive: false, id: "", timeElapsed: [0, 0, 0], gameCode: "", totalPot: 0.0, cashOut: 0, date: Date(), players: [], events: [])
+    @State private var newGame: Game = Game(isActive: false, isGameEnded: false, id: "", timeElapsed: [0, 0, 0], gameCode: "", totalPot: 0.0, cashOut: 0, date: Date(), players: [], events: [])
     @State private var navigateToGame: Bool = false
 
     // Game details
@@ -27,103 +27,114 @@ struct NewGameView: View {
 
     var body: some View {
         NavigationStack {
-            Form {
-                // Section for player details
-                Section(header: Text("Players (\(allPlayers.count))")) {
-                    if allPlayers.isEmpty && newPlayerUID.isEmpty {
-                        Button(action: quickAddFavorites) {
-                            Label("Quick Add", systemImage: "star.fill")
-                                .font(.headline)
-                        }
-                        .foregroundStyle(.orange)
-                    } else if (!isAllPlayersExisting && !newPlayerUID.isEmpty) {
-                        Button(action: {
-                            showAlert = true
-                        }) {
-                            Label("Create User", systemImage: "person.crop.circle.fill.badge.plus")
-                                .foregroundStyle(.red)
-                        }
-                        .alert("Create new user?", isPresented: $showAlert) {
-                            Button("Yes") {
-                                newPlayerUID = newPlayerUID.uppercased().trimmingCharacters(in: .whitespacesAndNewlines)
-                                if !(newPlayerUID.isEmpty) {
-                                    firestoreService.createUser(id: newPlayerUID) { _ in }
-                                    allUsers.append(User(id: newPlayerUID, totalProfit: 0, isFavorite: false, profitData: [0], totalWins: 0, timePlayed: 0, totalBuyIn: 0))
-                                    allPlayers.append(Player(id: newPlayerUID, buyIn: 5, cashOut: 0, profit: -5.00))
-                                    newPlayerUID = ""
-                                    isAllPlayersExisting = true
-                                }
+            ZStack {
+                
+                LinearGradient(
+                    gradient: Gradient(colors: [.orange.opacity(0.2), .black]),
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+                .edgesIgnoringSafeArea(.all)
+                
+                Form {
+                    // Section for player details
+                    Section(header: Text("Players (\(allPlayers.count))")) {
+                        if allPlayers.isEmpty && newPlayerUID.isEmpty {
+                            Button(action: quickAddFavorites) {
+                                Label("Quick Add", systemImage: "star.fill")
+                                    .font(.headline)
                             }
-                            
-                            Button("Cancel", role: .cancel) {}
-                                .foregroundStyle(.red)
-                        }
-                    } else if (isAllPlayersUnique && !newPlayerUID.isEmpty) || newPlayerUID.isEmpty {
-                        Button(action: {
-                            if !newPlayerUID.isEmpty {
-                                newPlayerUID = newPlayerUID.trimmingCharacters(in: .whitespacesAndNewlines)
-                                let newPlayer = Player(id: newPlayerUID, buyIn: 5, cashOut: 0, profit: -5.00)
-                                allPlayers.append(newPlayer)
-                                newPlayerUID = ""
-                            }
-                        }) {
-                            Label("Add Player", systemImage: "plus.circle")
-                        }
-                    }
-
-
-                    if !isAllPlayersUnique {
-                        Button(action: {}) {
-                            Label("Player Exists", systemImage: "exclamationmark.triangle")
-                                .foregroundStyle(.gray)
-                        }
-                        .disabled(true)
-                    }
-
-                    TextField("Player Name", text: $newPlayerUID)
-                        .disableAutocorrection(true)
-                        .autocapitalization(.allCharacters)
-                        .onChange(of: newPlayerUID) { _, newValue in
-                            validatePlayerInput(newValue)
-                        }
-
-                    ForEach(allPlayers.reversed()) { player in
-                        Text(player.id)
-                            .font(.subheadline)
                             .foregroundStyle(.orange)
-                            .bold()
-                            .swipeActions(edge: .trailing, allowsFullSwipe: true) {
-                                Button(role: .destructive) {
-                                    removePlayer(player)
-                                } label: {
-                                    Label("Delete", systemImage: "trash")
-                                }
+                        } else if (!isAllPlayersExisting && !newPlayerUID.isEmpty) {
+                            Button(action: {
+                                showAlert = true
+                            }) {
+                                Label("Create User", systemImage: "person.crop.circle.fill.badge.plus")
+                                    .foregroundStyle(.red)
                             }
+                            .alert("Create new user?", isPresented: $showAlert) {
+                                Button("Yes") {
+                                    newPlayerUID = newPlayerUID.uppercased().trimmingCharacters(in: .whitespacesAndNewlines)
+                                    if !(newPlayerUID.isEmpty) {
+                                        firestoreService.createUser(id: newPlayerUID) { _ in }
+                                        allUsers.append(User(id: newPlayerUID, totalProfit: 0, isFavorite: false, profitData: [0], totalWins: 0, timePlayed: 0, totalBuyIn: 0))
+                                        allPlayers.append(Player(id: newPlayerUID, buyIn: 5, cashOut: 0, profit: -5.00))
+                                        newPlayerUID = ""
+                                        isAllPlayersExisting = true
+                                    }
+                                }
+                                
+                                Button("Cancel", role: .cancel) {}
+                                    .foregroundStyle(.red)
+                            }
+                        } else if (isAllPlayersUnique && !newPlayerUID.isEmpty) || newPlayerUID.isEmpty {
+                            Button(action: {
+                                if !newPlayerUID.isEmpty {
+                                    newPlayerUID = newPlayerUID.trimmingCharacters(in: .whitespacesAndNewlines)
+                                    let newPlayer = Player(id: newPlayerUID, buyIn: 5, cashOut: 0, profit: -5.00)
+                                    allPlayers.append(newPlayer)
+                                    newPlayerUID = ""
+                                }
+                            }) {
+                                Label("Add Player", systemImage: "plus.circle")
+                            }
+                        }
+
+
+                        if !isAllPlayersUnique {
+                            Button(action: {}) {
+                                Label("Player Exists", systemImage: "exclamationmark.triangle")
+                                    .foregroundStyle(.gray)
+                            }
+                            .disabled(true)
+                        }
+
+                        TextField("Player Name", text: $newPlayerUID)
+                            .disableAutocorrection(true)
+                            .autocapitalization(.allCharacters)
+                            .onChange(of: newPlayerUID) { _, newValue in
+                                validatePlayerInput(newValue)
+                            }
+
+                        ForEach(allPlayers.reversed()) { player in
+                            Text(player.id)
+                                .font(.subheadline)
+                                .foregroundStyle(.orange)
+                                .bold()
+                                .swipeActions(edge: .trailing, allowsFullSwipe: true) {
+                                    Button(role: .destructive) {
+                                        removePlayer(player)
+                                    } label: {
+                                        Label("Delete", systemImage: "trash")
+                                    }
+                                }
+                        }
                     }
-                }
 
-                HStack {
-                    Text("Buy in ($)")
-                        .foregroundStyle(.white).opacity(0.7)
-                    Divider()
-                        .padding(.horizontal, 5)
-                    Text("5")
-                        .bold()
-                    Spacer()
-                    Text("Dollars")
-                        .foregroundStyle(.white).opacity(0.7)
-                }
+                    HStack {
+                        Text("Buy in ($)")
+                            .foregroundStyle(.white).opacity(0.7)
+                        Divider()
+                            .padding(.horizontal, 5)
+                        Text("5")
+                            .bold()
+                        Spacer()
+                        Text("Dollars")
+                            .foregroundStyle(.white).opacity(0.7)
+                    }
 
-            // Save button
-                Button("Create Game", action: createGame)
-                    .disabled(allPlayers.count < 2)
-            }
-            .navigationTitle("Create Game")
-            .onAppear(perform: fetchUsers)
-            .navigationDestination(isPresented: $navigateToGame) {
-                OngoingGameView(game: newGame, allUsers: allUsers)
+                // Save button
+                    Button("Create Game", action: createGame)
+                        .disabled(allPlayers.count < 2)
+                }
+                .navigationTitle("Create Game")
+                .onAppear(perform: fetchUsers)
+                .navigationDestination(isPresented: $navigateToGame) {
+                    OngoingGameView(game: newGame, allUsers: allUsers)
+                }
             }
         }
+        .scrollContentBackground(.hidden)
     }
 
     // MARK: - Helper Functions
@@ -169,6 +180,7 @@ struct NewGameView: View {
 
         newGame = Game(
             isActive: true,
+            isGameEnded: false,
             id: uid,
             timeElapsed: [0, 0, 0],
             gameCode: gameCode,

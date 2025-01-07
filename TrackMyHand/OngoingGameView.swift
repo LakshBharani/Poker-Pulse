@@ -8,9 +8,6 @@
 import SwiftUI
 
 struct OngoingGameView: View {
-    private enum Field: Int, CaseIterable {
-        case amount
-    }
     
     @ObservedObject private var timer = MyTimer()
     @State private var isClockStarted: Bool = false
@@ -19,63 +16,70 @@ struct OngoingGameView: View {
     @State var transactionTo: String = ""
     @State var transactionAmount: String = ""
     @State private var isMakingTransaction: Bool = false
-    @State private var isGameOver: Bool = false
     @State private var isShowingGameOverAlert: Bool = false
     @State private var isShowingCashOutAlert: Bool = false
     @State private var isReadyToCashOut: Bool = false
     @State private var gameStatus: String = ""
     @State var game: Game
-    @FocusState private var focusedField: Field?
     var allUsers: [User]
     
     var body: some View {
         @StateObject var gameViewModel = GameViewModel(game: game)
         
         NavigationStack {
-            ScrollView(showsIndicators: false) {
-                RoundedRectangle(cornerRadius: 10)
-                    .frame(height: 30)
-                    .foregroundStyle(.gray).opacity(0.2)
-                    .overlay(
-                        ZStack {
-                            HStack {
-                                Text("Game Code")
+            ZStack {
+                
+                LinearGradient(
+                    gradient: Gradient(colors: [.orange.opacity(0.2), .black]),
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+                .edgesIgnoringSafeArea(.all)
+                
+                ScrollView(showsIndicators: false) {
+                    RoundedRectangle(cornerRadius: 10)
+                        .frame(height: 30)
+                        .foregroundStyle(.gray).opacity(0.1)
+                        .overlay(
+                            ZStack {
+                                HStack {
+                                    Text("Game Code")
+                                        .foregroundStyle(.orange)
+                                        .bold()
+                                        .font(.system(size: 12))
+                                    Spacer()
+                                
+                                    
+                                    Text(gameStatus)
+                                        .foregroundStyle(game.isGameEnded ? .red : .green)
+                                        .bold()
+                                        .font(.system(size: 12))
+                                }
+                                .padding(.horizontal)
+                                
+                                Text(game.gameCode)
                                     .foregroundStyle(.orange)
                                     .bold()
                                     .font(.system(size: 12))
-                                Spacer()
-                            
-                                
-                                Text(gameStatus)
-                                    .foregroundStyle(isGameOver ? .red : .green)
-                                    .bold()
-                                    .font(.system(size: 12))
                             }
-                            .padding(.horizontal)
-                            
-                            Text(game.gameCode)
+                        )
+                        .padding(.top)
+                    
+                    RoundedRectangle(cornerRadius: 10)
+                        .frame(height: 100)
+                        .foregroundStyle(.gray).opacity(0.1)
+                        .background(
+                            Text(game.isActive ?
+                                 String(format: "%02d : %02d : %02d", timer.hoursElapsed, timer.minutesElapsed, timer.secondsElapsed)
+                                 : String(format: "%02d : %02d : %02d", game.timeElapsed[0], game.timeElapsed[1], game.timeElapsed[2]))
                                 .foregroundStyle(.orange)
                                 .bold()
-                                .font(.system(size: 12))
-                        }
-                    )
-                    .padding(.top)
-                
-                RoundedRectangle(cornerRadius: 10)
-                    .frame(height: 100)
-                    .foregroundStyle(.gray).opacity(0.2)
-                    .background(
-                        Text(game.isActive ?
-                             String(format: "%02d : %02d : %02d", timer.hoursElapsed, timer.minutesElapsed, timer.secondsElapsed)
-                             : String(format: "%02d : %02d : %02d", game.timeElapsed[0], game.timeElapsed[1], game.timeElapsed[2]))
-                            .foregroundStyle(.orange)
-                            .bold()
-                            .font(.system(size: 60))
-                    )
-                    .onAppear {
-                        if game.isActive {
-                            gameStatus = isGameOver ? "Game Over" : "In progress"
-                            if game.timeElapsed == [0, 0, 0] {
+                                .font(.system(size: 60))
+                        )
+                        .onAppear {
+                            gameStatus = game.isGameEnded ? "Game Over" : "In progress"
+                            isMakingTransaction = game.isGameEnded
+                            if game.events.count == 0 {
                                 if !(game.players.contains(where: { $0.id == "BANK" })) {
                                     game.players.insert(Player(id: "BANK", buyIn: 0, cashOut: 0, profit: 0), at: 0)
                                 }
@@ -87,152 +91,80 @@ struct OngoingGameView: View {
                                 timer.hoursElapsed = game.timeElapsed[0]
                                 timer.minutesElapsed = game.timeElapsed[1]
                                 timer.secondsElapsed = game.timeElapsed[2]
-                                isGameOver = false
                             }
-                        } else {
-                            gameStatus = "Summary"
-                            isGameOver = false
                             
+                            
+                            if !game.isGameEnded {
+                                isClockStarted = true
+                                timer.start(firestoreService: firestoreService, game: game)
+                            }
+                            transactionFrom = game.players.first!.id
+                            transactionTo = game.players.first!.id
                         }
-                        transactionFrom = game.players.first!.id
-                        transactionTo = game.players.first!.id
-                    }
+                                    
+                    CashStatusBar(game: game)
+                    
+                    if game.isActive {
+                        if (isMakingTransaction || game.isGameEnded) {
+                            VStack(alignment: .leading) {
                                 
-                CashStatusBar(game: game, isGameOver: isGameOver)
-                
-                if game.isActive {
-                    if (isMakingTransaction || isGameOver) {
-                        VStack(alignment: .leading) {
-                            VStack {
-                                // Transaction Pickers
-                                HStack(alignment: .center) {
-                                    Menu {
-                                        Picker("From", selection: $transactionFrom) {
-                                            ForEach(game.players, id: \.self.id) { player in
-                                                Text(player.id)
-                                                    .font(.subheadline)
-                                                    .lineLimit(1)
-                                            }
-                                        }
-                                    } label: {
-                                        Text(transactionFrom)
-                                            .lineLimit(1)
+                                TransactionView(transactionFrom: $transactionFrom, transactionTo: $transactionTo, transactionAmount: $transactionAmount, game: game)
+                                
+                                // Button Bar
+                                HStack {
+                                    if !game.isGameEnded {
+                                        Button(action: {
+                                            isMakingTransaction = false
+                                        }, label: {
+                                            RoundedRectangle(cornerRadius: 8)
+                                                .foregroundStyle(.red).opacity(0.2)
+                                                .frame(height: 50)
+                                                .overlay(content: {
+                                                    Text("Cancel")
+                                                        .font(.subheadline)
+                                                        .foregroundStyle(.red)
+                                                })
+                                        })
                                     }
-                                    Spacer()
-                                    Image(systemName: "arrow.right")
-                                        .foregroundStyle(.gray)
-                                        .frame(alignment: .bottom)
-                                    Spacer()
-                                    Menu {
-                                        Picker("To", selection: $transactionTo) {
-                                            let selectedList = !isGameOver ? game.players : Array(game.players.prefix(1))
-                                            ForEach(selectedList, id: \.self.id) { player in
-                                                Text(player.id)
-                                                    .font(.subheadline)
-                                                    .lineLimit(1)
-                                            }
-                                        }
-                                    } label: {
-                                        Text(transactionTo)
-                                            .lineLimit(1)
-                                    }
-                                    Divider()
-                                        .padding(.leading)
-                                    HStack {
-                                        TextField("Amount", text: $transactionAmount)
-                                            .keyboardType(.decimalPad)
-                                            .focused($focusedField, equals: .amount)
-                                            .toolbar {
-                                                ToolbarItem(placement: .keyboard) {
-                                                    Button("Done") {
-                                                        focusedField = nil
-                                                    }
-                                                }
-                                            }
-                                        Text("$")
-                                            .foregroundStyle(.white).opacity(0.45)
-                                    }
-                                    .frame(width: 80)
-                                }
-                                .padding()
-                            }
-                            .background {
-                                RoundedRectangle(cornerRadius: 8)
-                                    .foregroundStyle(.gray).opacity(0.2)
-                            }
-                            
-                            // Button Bar
-                            HStack {
-                                if !isGameOver {
+                                    
                                     Button(action: {
-                                        isMakingTransaction = false
+                                        var desc = ""
+                                        if game.isGameEnded {
+                                            desc = "cashout"
+                                        } else if transactionTo == "BANK" {
+                                            desc = "ingame-cashout"
+                                        } else {
+                                            desc = "buyin"
+                                        }
+                                        let formattedAmount = String(format: "%.2f", Double(transactionAmount) ?? 0.0).trimmingCharacters(in: .whitespacesAndNewlines)
+                                        let event = Transaction(id: game.events.count, description: desc, from: transactionFrom, to: transactionTo, amount: formattedAmount)
+                                        logEvent(newEvent: event)
+                                        isMakingTransaction = game.isGameEnded
+                                        transactionAmount = ""
+                                        gameViewModel.recalculatePredictions()
                                     }, label: {
                                         RoundedRectangle(cornerRadius: 8)
-                                            .foregroundStyle(.red).opacity(0.2)
+                                            .foregroundStyle(.blue).opacity(0.2)
                                             .frame(height: 50)
                                             .overlay(content: {
-                                                Text("Cancel")
+                                                Text("Confirm")
                                                     .font(.subheadline)
-                                                    .foregroundStyle(.red)
+                                                    .foregroundStyle(.blue)
                                             })
                                     })
+                                    .disabled((transactionFrom == transactionTo) || (transactionAmount == ""))
                                 }
-                                
-                                Button(action: {
-                                    var desc = ""
-                                    if isGameOver {
-                                        desc = "cashout"
-                                    } else if transactionTo == "BANK" {
-                                        desc = "ingame-cashout"
-                                    } else {
-                                        desc = "buyin"
-                                    }
-                                    let formattedAmount = String(format: "%.2f", Double(transactionAmount) ?? 0.0).trimmingCharacters(in: .whitespacesAndNewlines)
-                                    let event = Transaction(id: game.events.count, description: desc, from: transactionFrom, to: transactionTo, amount: formattedAmount)
-                                    logEvent(newEvent: event)
-                                    isMakingTransaction = false
-                                    transactionAmount = ""
-                                    gameViewModel.recalculatePredictions()
-                                }, label: {
-                                    RoundedRectangle(cornerRadius: 8)
-                                        .foregroundStyle(.blue).opacity(0.2)
-                                        .frame(height: 50)
-                                        .overlay(content: {
-                                            Text("Confirm")
-                                                .font(.subheadline)
-                                                .foregroundStyle(.blue)
-                                        })
-                                })
-                                .disabled((transactionFrom == transactionTo) || (transactionAmount == ""))
                             }
-                        }
-                        
-                        
-                    } else {
-                        if (!isClockStarted && !isGameOver) {
+                            
+                            
+                        } else {
                             HStack {
                                 Button(action: {
-                                    isClockStarted = true
-                                    timer.start(firestoreService: firestoreService, game: game)
-                                }, label: {
-                                    RoundedRectangle(cornerRadius: 10)
-                                        .foregroundStyle(timer.secondsElapsed > 0 ? .orange : .gray).opacity(0.2)
-                                        .frame(height: 70)
-                                        .overlay(content: {
-                                            Text(timer.secondsElapsed > 0 ? "Resume Game" : "Start Game")
-                                                .foregroundStyle(.orange)
-                                                .font(.system(size: 18, weight: .semibold))
-                                        })
-                                })
-                                
-                                Button(action: {
                                     game.timeElapsed = [timer.hoursElapsed, timer.minutesElapsed, timer.secondsElapsed]
-                                    isClockStarted = false
-                                    timer.stop()
                                     isShowingGameOverAlert = true
                                 }, label: {
                                     RoundedRectangle(cornerRadius: 10)
-                                        .foregroundStyle(.red).opacity(0.2)
+                                        .foregroundStyle(.red).opacity(0.15)
                                         .frame(height: 70)
                                         .overlay(content: {
                                             Text("End Game")
@@ -243,6 +175,8 @@ struct OngoingGameView: View {
                                 .alert("End Game", isPresented: $isShowingGameOverAlert) {
                                     Button("Cancel", role: .cancel) {}
                                     Button("Confirm") {
+                                        isClockStarted = false
+                                        timer.stop()
                                         firestoreService.updateGameStatusOnEnd(game: game) { result in
                                             if result != nil {
                                                 print("Game Over")
@@ -252,31 +186,13 @@ struct OngoingGameView: View {
                                             isReadyToCashOut = true
                                         }
                                         transactionTo = "BANK"
-                                        isGameOver = true
+                                        game.isGameEnded = true
                                         let event = Transaction(id: game.events.count, description: "game over", from: "", to: "", amount: "")
                                         logEvent(newEvent: event)
                                     }
                                 } message: {
                                     Text("This action cannot be undone")
                                 }
-                                
-                            }
-                            
-                        } else {
-                            HStack {
-                                Button(action: {
-                                    isClockStarted = false
-                                    timer.stop()
-                                }, label: {
-                                    RoundedRectangle(cornerRadius: 10)
-                                        .foregroundStyle(.red).opacity(0.2)
-                                        .frame(height: 70)
-                                        .overlay(content: {
-                                            Text("Pause Game")
-                                                .foregroundStyle(.red)
-                                                .font(.system(size: 18, weight: .semibold))
-                                        })
-                                })
                                 
                                 Button(action: {
                                     isMakingTransaction = true
@@ -291,89 +207,88 @@ struct OngoingGameView: View {
                                         })
                                 })
                             }
-                        }
-                        
-                        PredictionBarView(gameViewModel: gameViewModel)
+                            
 
-                    }
-                }
-                
-                Section(header: HStack {
-                    Text("Players (\(isGameOver ? game.players.count : game.players.count - 1))")
-                        .font(.subheadline)
-                        .foregroundStyle(.gray)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                    Text("Buy In ($)")
-                        .font(.subheadline)
-                        .foregroundStyle(.gray)
-                        .frame(maxWidth: .infinity, alignment: .center)
-                    Text("Profit ($)")
-                        .font(.subheadline)
-                        .foregroundStyle(.gray)
-                        .frame(maxWidth: .infinity, alignment: .trailing)
-                }
-                    .padding(.horizontal)
-                    .padding(.top, 10)) {
-                        ForEach(game.players) { player in
-                            if (player.id != "BANK") {
-                                PlayerDataRow(player: player)
-                            }
                         }
-                        Divider()
                     }
-                
-                if game.isActive {
-                    if !isGameOver {
-                        PlayerManagementBar(game: $game, allUsers: allUsers)
-                    } else {
-                        HStack {
-                            Button(action: {
-                                if game.totalPot != game.cashOut {
-                                    isShowingCashOutAlert = true
-                                    return
+                    
+                    Section(header: HStack {
+                        Text("Players (\(game.isGameEnded ? game.players.count : game.players.count - 1))")
+                            .font(.subheadline)
+                            .foregroundStyle(.gray)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                        Text("Buy In ($)")
+                            .font(.subheadline)
+                            .foregroundStyle(.gray)
+                            .frame(maxWidth: .infinity, alignment: .center)
+                        Text("Profit ($)")
+                            .font(.subheadline)
+                            .foregroundStyle(.gray)
+                            .frame(maxWidth: .infinity, alignment: .trailing)
+                    }
+                        .padding(.horizontal)
+                        .padding(.top, 10)) {
+                            ForEach(game.players) { player in
+                                if (player.id != "BANK") {
+                                    PlayerDataRow(player: player)
                                 }
-                                game.timeElapsed = [timer.hoursElapsed, timer.minutesElapsed, timer.secondsElapsed]
-                                logEvent(newEvent: Transaction(id: game.events.count, description: "Exit", from: "", to: "", amount: ""))
-                                firestoreService.updateGameStatusOnEnd(game: game) { result in
-                                    if result != nil {
-                                        print("Game Over")
+                            }
+                            Divider()
+                        }
+                    
+                    if game.isActive {
+                        if !game.isGameEnded {
+                            PlayerManagementBar(game: $game, allUsers: allUsers)
+                        } else {
+                            HStack {
+                                Button(action: {
+                                    if game.totalPot != game.cashOut {
+                                        isShowingCashOutAlert = true
+                                        return
                                     }
-                                }
-                                if game.timeElapsed != [0, 0, 0] {
-                                    Task {
-                                        await firestoreService.updateUserStatsOnGameEnd(game: game) { _ in
-                                            print("Game ended")
+                                    game.timeElapsed = [timer.hoursElapsed, timer.minutesElapsed, timer.secondsElapsed]
+                                    logEvent(newEvent: Transaction(id: game.events.count, description: "Exit", from: "", to: "", amount: ""))
+                                    firestoreService.updateGameStatusOnEnd(game: game) { result in
+                                        if result != nil {
+                                            print("Game Over")
                                         }
                                     }
+                                    if game.timeElapsed != [0, 0, 0] {
+                                        Task {
+                                            await firestoreService.updateUserStatsOnGameEnd(game: game) { _ in
+                                                print("Game ended")
+                                            }
+                                        }
+                                    }
+                                    game.players.removeAll(where: { $0.id == "BANK" })
+                                    isReadyToCashOut = true
+                                }, label: {
+                                    RoundedRectangle(cornerRadius: 8)
+                                        .foregroundStyle(.red).opacity(0.2)
+                                        .frame(height: 50)
+                                        .overlay(content: {
+                                            Text("Cashout & Exit")
+                                                .font(.subheadline)
+                                                .foregroundStyle(.red)
+                                        })
+                                })
+                                .alert("Incorrect Cashout", isPresented: $isShowingCashOutAlert) {
+                                } message: {
+                                    Text("Buy-In not equal to Cashout.\nPlease check again.")
                                 }
-                                game.players.removeAll(where: { $0.id == "BANK" })
-                                isReadyToCashOut = true
-                            }, label: {
-                                RoundedRectangle(cornerRadius: 8)
-                                    .foregroundStyle(.red).opacity(0.2)
-                                    .frame(height: 50)
-                                    .overlay(content: {
-                                        Text("Cashout & Exit")
-                                            .font(.subheadline)
-                                            .foregroundStyle(.red)
-                                    })
-                            })
-                            .alert("Incorrect Cashout", isPresented: $isShowingCashOutAlert) {
-                            } message: {
-                                Text("Buy-In not equal to Cashout.\nPlease check again.")
+                            }
+                            .navigationDestination(isPresented: $isReadyToCashOut) {
+                                ContentView()
                             }
                         }
-                        .navigationDestination(isPresented: $isReadyToCashOut) {
-                            ContentView()
-                        }
                     }
+                    
+                    
+                    EventLogger(game: game)
                 }
-                
-                
-                EventLogger(game: game)
+                .padding(.horizontal)
+                .navigationBarBackButtonHidden(game.isActive)
             }
-            .padding(.horizontal)
-            .navigationBarBackButtonHidden(game.isActive)
         }
         .navigationTitle("Game Summary")
         .toolbar(game.isActive ? .hidden : .visible)
@@ -396,6 +311,7 @@ struct OngoingGameView: View {
             
             if newEvent.to != "BANK" {
                 game.totalPot += Double(newEvent.amount)!
+                game.cashOut += Double(newEvent.amount)!
             }
             
             if newEvent.description == "ingame-cashout" {
@@ -445,39 +361,82 @@ struct OngoingGameView: View {
 }
 
 
-class MyTimer : ObservableObject {
-    @Published var hoursElapsed = 0
-    @Published var minutesElapsed = 0
-    @Published var secondsElapsed = 0
-
-    var timer = Timer()
-    
-    func start(firestoreService: FirestoreService, game: Game) {
-        timer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { [self] timer in
-            self.secondsElapsed += 1
-            if self.secondsElapsed == 60 {
-                self.minutesElapsed += 1
-                self.secondsElapsed = 0
-            }
-            if self.minutesElapsed == 60 {
-                self.hoursElapsed += 1
-                self.minutesElapsed = 0
-            }
-            let updatedTimeElapsed = [self.hoursElapsed, self.minutesElapsed, self.secondsElapsed]
-            var updatedGame = game
-            updatedGame.timeElapsed = updatedTimeElapsed
-            
-            firestoreService.updateIngameClock(game: updatedGame) { _ in }
-        }
+struct TransactionView: View {
+    private enum Field: Int, CaseIterable {
+        case amount
     }
     
-    func stop() {
-        timer.invalidate()
+    @Binding var transactionFrom: String
+    @Binding var transactionTo: String
+    @Binding var transactionAmount: String
+    @FocusState private var focusedField: Field?
+    let game: Game
+    
+    var body: some View {
+        VStack {
+            // Transaction Pickers
+            HStack(alignment: .center) {
+                Menu {
+                    Picker("From", selection: $transactionFrom) {
+                        ForEach(game.players, id: \.self.id) { player in
+                            Text(player.id)
+                                .font(.subheadline)
+                                .lineLimit(1)
+                        }
+                    }
+                } label: {
+                    Text(transactionFrom)
+                        .lineLimit(1)
+                }
+                Spacer()
+                Image(systemName: "arrow.right")
+                    .foregroundStyle(.gray)
+                    .frame(alignment: .bottom)
+                Spacer()
+                Menu {
+                    Picker("To", selection: $transactionTo) {
+                        let selectedList = !game.isGameEnded ? game.players : Array(game.players.prefix(1))
+                        ForEach(selectedList, id: \.self.id) { player in
+                            Text(player.id)
+                                .font(.subheadline)
+                                .lineLimit(1)
+                        }
+                    }
+                } label: {
+                    Text(transactionTo)
+                        .lineLimit(1)
+                }
+                Divider()
+                    .padding(.leading)
+                HStack {
+                    TextField("Amount", text: $transactionAmount)
+                        .keyboardType(.decimalPad)
+                        .focused($focusedField, equals: .amount)
+                        .toolbar {
+                            ToolbarItem(placement: .keyboard) {
+                                Button("Done") {
+                                    focusedField = nil
+                                }
+                            }
+                        }
+                    Text("$")
+                        .foregroundStyle(.white).opacity(0.45)
+                }
+                .frame(width: 80)
+            }
+            .padding()
+        }
+        .background {
+            RoundedRectangle(cornerRadius: 8)
+                .foregroundStyle(.gray).opacity(0.1)
+        }
     }
 }
 
+
+
 #Preview {
-    OngoingGameView(game: Game(isActive: true, id: "7B97E339-3EEF-4431-B6A7-85681B64D002", timeElapsed: [0, 0, 0], gameCode: "7B9002", totalPot: 40.0, cashOut: 0, date: Date(), players: [TrackMyHand.Player(id: "LAKSH", buyIn: 5.0, cashOut: 0.0, profit: -5.0), TrackMyHand.Player(id: "ATHARV", buyIn: 5.0, cashOut: 0.0, profit: -5.0), TrackMyHand.Player(id: "SAHAJ", buyIn: 5.0, cashOut: 0.0, profit: -5.0), TrackMyHand.Player(id: "USMAAN", buyIn: 5.0, cashOut: 0.0, profit: -5.0), TrackMyHand.Player(id: "AREEB", buyIn: 5.0, cashOut: 0.0, profit: -5.0), TrackMyHand.Player(id: "SAIF", buyIn: 5.0, cashOut: 0.0, profit: -5.0), TrackMyHand.Player(id: "ANIRUDH", buyIn: 5.0, cashOut: 0.0, profit: -5.0), TrackMyHand.Player(id: "LAKSHYA", buyIn: 5.0, cashOut: 0.0, profit: -5.0)], events: []),
+    OngoingGameView(game: Game(isActive: true, isGameEnded: false, id: "7B97E339-3EEF-4431-B6A7-85681B64D002", timeElapsed: [0, 0, 0], gameCode: "7B9002", totalPot: 40.0, cashOut: 0, date: Date(), players: [TrackMyHand.Player(id: "LAKSH", buyIn: 5.0, cashOut: 0.0, profit: -5.0), TrackMyHand.Player(id: "ATHARV", buyIn: 5.0, cashOut: 0.0, profit: -5.0), TrackMyHand.Player(id: "SAHAJ", buyIn: 5.0, cashOut: 0.0, profit: -5.0), TrackMyHand.Player(id: "USMAAN", buyIn: 5.0, cashOut: 0.0, profit: -5.0), TrackMyHand.Player(id: "AREEB", buyIn: 5.0, cashOut: 0.0, profit: -5.0), TrackMyHand.Player(id: "SAIF", buyIn: 5.0, cashOut: 0.0, profit: -5.0), TrackMyHand.Player(id: "ANIRUDH", buyIn: 5.0, cashOut: 0.0, profit: -5.0), TrackMyHand.Player(id: "LAKSHYA", buyIn: 5.0, cashOut: 0.0, profit: -5.0)], events: []),
                     
                     allUsers: [TrackMyHand.User(id: "ANIRUDH", totalProfit: 30.0, isFavorite: false, profitData: [0.0, 10.0, 7.0, 14.5, 30.0], totalWins: 3, timePlayed: 0, totalBuyIn: 45.0), TrackMyHand.User(id: "VIBHAV", totalProfit: 0.0, isFavorite: false, profitData: [0.0], totalWins: 0, timePlayed: 0, totalBuyIn: 0.0), TrackMyHand.User(id: "USMAAN", totalProfit: 0.0, isFavorite: false, profitData: [0.0], totalWins: 0, timePlayed: 0, totalBuyIn: 0.0), TrackMyHand.User(id: "SIDAK", totalProfit: 0.0, isFavorite: false, profitData: [0.0], totalWins: 0, timePlayed: 0, totalBuyIn: 0.0), TrackMyHand.User(id: "SAIF", totalProfit: 0.0, isFavorite: false, profitData: [0.0], totalWins: 0, timePlayed: 0, totalBuyIn: 0.0), TrackMyHand.User(id: "SAHAJ", totalProfit: 0.0, isFavorite: false, profitData: [0.0], totalWins: 0, timePlayed: 0, totalBuyIn: 0.0), TrackMyHand.User(id: "LAKSHYA", totalProfit: 0.0, isFavorite: false, profitData: [0.0], totalWins: 0, timePlayed: 0, totalBuyIn: 0.0), TrackMyHand.User(id: "LAKSH", totalProfit: 0.0, isFavorite: false, profitData: [0.0], totalWins: 0, timePlayed: 0, totalBuyIn: 0.0), TrackMyHand.User(id: "ATHARV", totalProfit: 0.0, isFavorite: false, profitData: [0.0], totalWins: 0, timePlayed: 0, totalBuyIn: 0.0), TrackMyHand.User(id: "AREEB", totalProfit: 0.0, isFavorite: false, profitData: [0.0], totalWins: 0, timePlayed: 0, totalBuyIn: 0.0)])
 }

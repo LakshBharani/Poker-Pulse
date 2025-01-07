@@ -150,24 +150,24 @@ class FirestoreService: ObservableObject {
     
     // update ingame clock in db
     func updateIngameClock(game: Game, completion: @escaping (Error?) -> Void) {
-            let db = Firestore.firestore()
-            let gameRef = db.collection("games").document(game.id)
+        let db = Firestore.firestore()
+        let gameRef = db.collection("games").document(game.id)
+        
+        gameRef.getDocument { (document, error) in
+            if let error = error {
+                completion(error)
+                return
+            }
             
-            gameRef.getDocument { (document, error) in
-                if let error = error {
+            if let document = document, document.exists {
+                gameRef.updateData([
+                    "timeElapsed": game.timeElapsed
+                ]) { error in
                     completion(error)
-                    return
-                }
-                
-                if let document = document, document.exists {
-                    gameRef.updateData([
-                        "timeElapsed": game.timeElapsed
-                    ]) { error in
-                        completion(error)
-                    }
                 }
             }
         }
+    }
     
     func updateGameStatusOnEnd(game: Game, completion: @escaping (Error?) -> Void) {
         let db = Firestore.firestore()

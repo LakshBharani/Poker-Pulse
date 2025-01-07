@@ -26,6 +26,7 @@ struct Player: Identifiable, Codable {
 
 struct Game: Identifiable, Codable {
     var isActive: Bool
+    var isGameEnded: Bool
     var id: String
     var timeElapsed: [Int]
     var gameCode: String
@@ -43,9 +44,5 @@ struct Transaction: Identifiable, Codable {
     var from: String
     var to: String
     var amount: String
-}
-
-struct GameData {
-    var code: String
 }
 

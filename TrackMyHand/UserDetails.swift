@@ -12,7 +12,6 @@ import Foundation
 
 struct UserDetails: View {
     @State private var cumulativeYData: [Double] = []
-    @State var period: Int = 1
 
     var user: User
     let columns = [
@@ -26,6 +25,8 @@ struct UserDetails: View {
         let profit_per_min = String(format: "%.2f", user.totalProfit / Double(user.timePlayed))
         let winRate = String(format: "%.0f", Double(user.totalWins) / Double(user.profitData.count - 1) * 100)
         let timePlayed = String(user.timePlayed)
+        let maxProfit = String(format: "%.2f", user.profitData.max()!)
+        let maxLoss = String(format: "%.2f", user.profitData.min()!)
         let averageBuyIn = String(format: "%.2f", user.totalBuyIn / Double(user.profitData.count - 1))
         let screenGradient = user.totalProfit >= 0 ? [Color.green.opacity(0.25), Color.black] : [Color.red.opacity(0.25), Color.black]
         
@@ -34,7 +35,7 @@ struct UserDetails: View {
                 VStack(alignment: .leading, spacing: 10) {
                     HStack {
                         Text("Activity Summary")
-                            .foregroundColor(.white).opacity(0.7)
+                            .foregroundColor(.white).opacity(0.6)
                             .font(.title2)
                             .bold()
                             .padding(.bottom)
@@ -42,47 +43,23 @@ struct UserDetails: View {
                     }
                     .padding(.horizontal)
                     
-                    if (user.profitData.count > 1) {
+                    if (user.profitData.count > 1 && user.timePlayed > 0) {
                         // widget showing profit over time
-                        chartWidget()
-                            .onAppear() {
-                                if user.profitData.count < 4 {
-                                    period = 1
-                                } else if user.profitData.count < 10 {
-                                    period = 5
-                                } else {
-                                    period = user.profitData.count < 4 ? 1 : Int(user.profitData.count / 5)
-                                }
-                                
-                            }
                         
-                        
+                        ChartWidget(user: user)
+                            .frame(height: 375)
+                            
                         HStack {
-                            Text("All Time ($)")
-                                .font(.system(size: 16))
-                                .foregroundColor(.white).opacity(0.7)
-                            Divider()
-                                .padding(.horizontal)
-                            Spacer()
-                            HStack {
-                                Text("\(user.totalProfit >= 0 ? "+" : "-") \(abs(user.totalProfit), specifier: "%.2f")")
-                                    .font(.title2)
-                                    .bold()
-                                    .foregroundStyle(getProfitColor(profit: user.totalProfit))
-                                
-                            }
+                            createSubtitleInfoBox(title: "Win Rate (%)", value0: "\(winRate)%", subtitle1: "W", subtitle2: "L", value1: String(user.totalWins), value2: String(user.profitData.count - user.totalWins - 1), isReactive: false)
+                            createSubtitleInfoBox(title: "All Time ($)", value0: String(user.totalProfit), subtitle1: "Hi", subtitle2: "Lo", value1: String(maxProfit), value2: String(maxLoss), isReactive: true)
                         }
-                        .padding(.vertical, 10)
                         .padding(.horizontal)
-                        .background(RoundedRectangle(cornerRadius: 13).fill(Color.gray.opacity(0.2)))
-                            .padding(.horizontal)
                         
                         LazyVGrid(columns: columns, spacing: 10) {
                             createInfoBox(title: "Sessions", value: sessions)
                             createReactiveInfoBox(title: "\(user.totalProfit >= 0 ? "Profit" : "Loss") / Session", value: profit_per_session)
                             createInfoBox(title: "Minutes Played", value: timePlayed)
                             createReactiveInfoBox(title: "\(user.totalProfit >= 0 ? "Profit" : "Loss") / Minute", value: profit_per_min)
-                            createInfoBox(title: "Win Rate (%)", value: "\(winRate)%")
                             createInfoBox(title: "Avg. BuyIn", value: averageBuyIn)
                         }
                         .padding(.horizontal)
@@ -91,7 +68,8 @@ struct UserDetails: View {
                         errorbanner()
                     }
                 }
-                .padding(.vertical)
+                .padding(.bottom)
+                .padding(.top, 5)
             }
             .background(
                 LinearGradient(
@@ -107,23 +85,6 @@ struct UserDetails: View {
     }
     
     
-    // Simple Moving Average function
-    func simpleMovingAverage(data: [Double], period: Int) -> [Double] {
-        var smaValues = [Double]()
-        
-        for i in 0..<data.count {
-            if i >= period - 1 {
-                let window = data[(i - period + 1)...i]
-                let sma = window.reduce(0, +) / Double(period)
-                smaValues.append(sma)
-            } else {
-                smaValues.append(0)
-            }
-        }
-        
-        return smaValues
-    }
-    
     func generateProfits(from netProfits: [Double]) -> [Double] {
         var profits: [Double] = []
         
@@ -134,136 +95,15 @@ struct UserDetails: View {
         
         return profits
     }
-    
-    func chartWidget() -> some View {
-        let profitData = user.profitData
-        let smaValues = simpleMovingAverage(data: profitData, period: period)
-        
-        return VStack {
-            Chart {
-                // Plot main line and area chart
-                ForEach(0..<user.profitData.count, id: \.self) { session in
-                    AreaMark(
-                        x: PlottableValue.value("Session 1", session),
-                        y: PlottableValue.value("Net Profit", user.profitData[session])
-                    )
-                    .foregroundStyle(getCurveGradient(profit: user.totalProfit))
-                    
-                    LineMark(
-                        x: PlottableValue.value("Session 1", session),
-                        y: PlottableValue.value("Net Profit", user.profitData[session]),
-                        series: .value("Line", "One")
-                    )
-                    .foregroundStyle(getProfitColor(profit: user.totalProfit))
-                    
-                    PointMark(
-                        x: PlottableValue.value("Session 1", session),
-                        y: PlottableValue.value("Net Profit", user.profitData[session]))
-                    .foregroundStyle(getProfitColor(profit: user.totalProfit))
-                    .symbolSize(20)
-                    
-                    LineMark(
-                        x: PlottableValue.value("Session 2", session),
-                        y: PlottableValue.value("Median", smaValues[session]),
-                        series: .value("Line", "Two")
-                    )
-                    .foregroundStyle(.white).opacity(0.7)
-                    .lineStyle(StrokeStyle(lineWidth: 2, dash: [5, 5]))
-                }
-                
-                RuleMark(y: .value("Break-Even", 0))
-                    .lineStyle(StrokeStyle(lineWidth: 1, dash: [1]))
-                    .foregroundStyle(.gray)
-                
-                
-            }
-            .chartOverlay { proxy in
-                GeometryReader { geometry in
-                    // Track user interaction
-                    TouchInteractionView(
-                        proxy: proxy,
-                        geometry: geometry,
-                        user: user,
-                        plotAreaFrame: CGRect()
-                    )
-                }
-            }
-            .chartXAxisLabel(position: .bottom, alignment: .center) {
-                Text("Session Number")
-                    .foregroundColor(.white).opacity(0.7)
-            }
-            .chartYAxisLabel(position: .leading, alignment: .center) {
-                Text("Net Profit")
-                    .foregroundColor(.white).opacity(0.7)
-            }
-            .chartLegend(position: .top, alignment: .leading)
-            .chartXScale(domain: 0...(user.profitData.count - 1))
-            .padding(.bottom)
-            .padding(.horizontal)
-            .frame(height: 300)
+
+
+    func getProfitColor(profit: Double) -> Color {
+        if (profit >= 0) {
+            return Color.green
+        } else {
+            return Color.red
         }
     }
-
-
-    struct TouchInteractionView: View {
-        let proxy: ChartProxy
-        let geometry: GeometryProxy
-        let user: User
-        let plotAreaFrame: CGRect
-
-        @State private var hoveredXValue: Int?
-        @State private var hoveredYValue: Double?
-        @State private var isTouching: Bool = false
-
-        var body: some View {
-            Rectangle()
-                .fill(Color.clear)
-                .contentShape(Rectangle()) // Enable interaction
-                .gesture(
-                    DragGesture()
-                        .onChanged { value in
-                            isTouching = true
-                            
-                            // Get X-axis value based on touch location
-                            if let xValue: Int = proxy.value(atX: value.location.x) {
-                                hoveredXValue = xValue
-                                
-                                // Get corresponding Y-axis value
-                                if xValue >= 0 && xValue < user.profitData.count {
-                                    hoveredYValue = user.profitData[xValue]
-                                }
-                            }
-                        }
-                        .onEnded { _ in
-                            isTouching = false
-                            hoveredXValue = nil
-                            hoveredYValue = nil
-                        }
-                )
-                .overlay {
-                    if let xValue = hoveredXValue, let yValue = hoveredYValue, isTouching {
-                        let resolvedFrame = geometry[proxy.plotFrame!]
-
-                        VStack(spacing: 5) {
-                            Text("Session: \(xValue)")
-                                .font(.caption)
-                                .foregroundColor(.white)
-                            Text("Net Profit: \(yValue, specifier: "%.2f")")
-                                .font(.caption)
-                                .foregroundColor(.white)
-                        }
-                        .padding(5)
-                        .background(Color.black.opacity(0.7))
-                        .cornerRadius(8)
-                        .position(
-                            x: resolvedFrame.minX + proxy.position(forX: xValue)!,
-                            y: resolvedFrame.minY + proxy.position(forY: yValue)!
-                        )
-                    }
-                }
-        }
-    }
-
     
     func errorbanner() -> some View {
         return HStack {
@@ -278,52 +118,63 @@ struct UserDetails: View {
             .padding(.horizontal)
     }
     
-    func getProfitColor(profit: Double) -> Color {
-        if (profit >= 0) {
-            return Color.green
-        } else {
-            return Color.red
-        }
-    }
-    
-    func getCurveGradient(profit: Double) -> LinearGradient {
-        let profitColor = Color(hue: 0.33, saturation: 0.81, brightness: 0.76)
-        let lossColor = Color(hue: 0, saturation: 0.81, brightness: 0.76)
+    func createSubtitleInfoBox(title: String, value0: String, subtitle1: String, subtitle2: String, value1: String, value2: String, isReactive: Bool) -> some View {
         
-        if (profit >= 0) {
-            return LinearGradient(
-                gradient: Gradient (
-                    colors: [
-                        profitColor.opacity(0.5),
-                        profitColor.opacity(0.2),
-                        profitColor.opacity(0.1),
-                        profitColor.opacity(0.03),
-                    ]
-                ),
-                startPoint: .top,
-                endPoint: .bottom
-            )
-        } else {
-            return LinearGradient(
-                gradient: Gradient (
-                    colors: [
-                        lossColor.opacity(0.5),
-                        lossColor.opacity(0.2),
-                        lossColor.opacity(0.1),
-                        lossColor.opacity(0.03),
-                    ]
-                ),
-                startPoint: .top,
-                endPoint: .bottom
-            )
+        
+        return VStack(alignment: .leading, spacing: 10) {
+            let valueColor = Double(value0) ?? 0 >= 0 ? Color.green : Color.red
+            Text(title)
+                .font(.system(size: 16))
+                .foregroundColor(.white).opacity(0.5)
+            Divider()
+            HStack {
+                Text("\(value0)".replacingOccurrences(of: "-", with: ""))
+                    .font(.system(size: 30))
+                    .bold()
+                    .foregroundStyle(isReactive ? valueColor : .mint)
+                
+                Spacer()
+            }
+            
+            HStack {
+                Text("\(subtitle1)")
+                    .font(.system(size: 14))
+                    .foregroundStyle(.green)
+                Spacer()
+                Text("\(value1)")
+                    .font(.system(size: 18))
+                    .foregroundStyle(.green)
+                    .bold()
+            }
+            .padding(.vertical, 2)
+            .padding(.horizontal, 8)
+            .background(RoundedRectangle(cornerRadius: 5).fill(Color.green.opacity(0.2)))
+            
+            HStack {
+                Text("\(subtitle2)")
+                    .font(.system(size: 14))
+                    .foregroundStyle(.red)
+                Spacer()
+                Text("\(value2)")
+                    .font(.system(size: 18))
+                    .foregroundStyle(.red)
+                    .bold()
+            }
+            .padding(.vertical, 2)
+            .padding(.horizontal, 8)
+            .background(RoundedRectangle(cornerRadius: 5).fill(Color.red.opacity(0.2)))
         }
+        .frame(maxWidth: .infinity)
+        .padding()
+        .background(RoundedRectangle(cornerRadius: 13).fill(Color.gray.opacity(0.1)))
+
     }
 
     func createInfoBox(title: String, value: String) -> some View {
         VStack(alignment: .leading, spacing: 10) {
             Text(title)
                 .font(.system(size: 16))
-                .foregroundColor(.white).opacity(0.7)
+                .foregroundColor(.white).opacity(0.5)
             Divider()
             Text(value.replacingOccurrences(of: "-", with: ""))
                 .font(.system(size: 30))
@@ -332,39 +183,36 @@ struct UserDetails: View {
         }
         .frame(maxWidth: .infinity)
         .padding()
-        .background(RoundedRectangle(cornerRadius: 13).fill(Color.gray.opacity(0.2)))
+        .background(RoundedRectangle(cornerRadius: 13).fill(Color.gray.opacity(0.1)))
     }
     
     func createReactiveInfoBox(title: String, value: String) -> some View {
         VStack(alignment: .leading, spacing: 10) {
             Text(title)
                 .font(.system(size: 16))
-                .foregroundColor(.white).opacity(0.7)
+                .foregroundColor(.white).opacity(0.5)
             Divider()
-            if (Double(value)! > 0) {
-                Text(value)
-                    .font(.system(size: 30))
-                    .bold()
-                    .foregroundStyle(.green)
-            } else if (Double(value)! < 0) {
-                Text(value.replacingOccurrences(of: "-", with: ""))
-                    .font(.system(size: 30))
-                    .bold()
-                    .foregroundStyle(.red)
-            } else {
-                Text(value)
-                    .font(.system(size: 30))
-                    .bold()
-                    .foregroundStyle(.white)
-            }
+            Text(value.replacingOccurrences(of: "-", with: ""))
+                .font(.system(size: 30))
+                .bold()
+                .foregroundStyle(Double(value)! >= 0 ? .green : .red)
         }
         .frame(maxWidth: .infinity)
         .padding()
-        .background(RoundedRectangle(cornerRadius: 13).fill(Color.gray.opacity(0.2)))
+        .background(RoundedRectangle(cornerRadius: 13).fill(Color.gray.opacity(0.1)))
+    }
+}
+
+struct HLine: Shape {
+    func path(in rect: CGRect) -> Path {
+        Path { path in
+            path.move(to: CGPoint(x: rect.minX, y: rect.midY))
+            path.addLine(to: CGPoint(x: rect.maxX, y: rect.midY))
+        }
     }
 }
 
 
 #Preview {
-    UserDetails(user: User(id: "LAKSH", totalProfit: -120, isFavorite: false, profitData: [0, -120], totalWins: 0, timePlayed: 10, totalBuyIn: 10))
+    UserDetails(user: User(id: "LAKSH", totalProfit: -50, isFavorite: false, profitData: [0, 5, 10, 7.25, 5, -10, -30, -50], totalWins: 2, timePlayed: 600, totalBuyIn: 50))
 }
