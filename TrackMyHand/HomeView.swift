@@ -9,12 +9,12 @@ import SwiftUI
 import CoreData
 
 
-struct ContentView: View {
+struct HomeView: View {
     @StateObject private var firestoreService = FirestoreService()
     @Environment(\.colorScheme) var colorScheme
     @State private var users: [User] = []
     @State private var games: [Game] = []
-    @State private var gamesFetched = 7
+    @State private var gamesFetched = 5
     @State private var totalUsers = 0
     @State private var totalGames = 0
     
@@ -109,6 +109,21 @@ struct ContentView: View {
                 reloadData()
             }
             .navigationTitle("Poker Tracker")
+            .toolbar {
+                ToolbarItem {
+                    Menu {
+                        
+                        NavigationLink(destination: JoinGroupView()) {
+                            Button("Switch Group", systemImage: "arrow.left.arrow.right") {}
+                        }
+
+                        Button("Exit Group", role: .destructive) {}
+
+                    } label: {
+                        Label("Menu", systemImage: "ellipsis.circle")
+                    }
+                }
+            }
         }
         .onAppear {
             reloadData()
@@ -147,6 +162,6 @@ struct ContentView: View {
 
 
 #Preview {
-    ContentView()
+    HomeView()
 }
 

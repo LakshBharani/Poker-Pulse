@@ -46,3 +46,10 @@ struct Transaction: Identifiable, Codable {
     var amount: String
 }
 
+struct Group: Identifiable, Codable {
+    var id: String
+    var name: String
+    var inviteCode: String
+    var users: [String]
+}
+

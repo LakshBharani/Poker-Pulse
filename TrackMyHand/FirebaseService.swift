@@ -11,6 +11,23 @@ import SwiftUICore
 
 class FirestoreService: ObservableObject {
     private let db = Firestore.firestore()
+    
+    // create new group
+    func createGroup(userId: String, name: String, completion: @escaping ([User]) -> Void) {
+        do {
+            let collectionRef = db.collection("groups")
+            let groupRef = collectionRef.document()
+            self.fetchUsers { users in
+                if !users.contains(where: { $0.id == userId }) {
+                    self.createUser(id: userId) { _ in }
+                }
+            }
+            let group = Group(id: groupRef.documentID, name: name, inviteCode: "", users: [userId])
+            let _ = try db.collection("groups").document(group.id).setData(from: group)
+            
+        } catch _ {}
+        
+    }
 
     // Fetch all users
     func fetchUsers(completion: @escaping ([User]) -> Void) {
@@ -45,8 +62,7 @@ class FirestoreService: ObservableObject {
             let user = User(id: id, totalProfit: 0, isFavorite: false, profitData: [0], totalWins: 0, timePlayed: 0, totalBuyIn: 0)
             let _ = try db.collection("users").document(user.id).setData(from: user)
             
-        } catch _ {
-        }
+        } catch _ {}
     }
     
     // Fetch only top 3 users with most profit
@@ -150,7 +166,6 @@ class FirestoreService: ObservableObject {
     
     // update ingame clock in db
     func updateIngameClock(game: Game, completion: @escaping (Error?) -> Void) {
-        let db = Firestore.firestore()
         let gameRef = db.collection("games").document(game.id)
         
         gameRef.getDocument { (document, error) in
@@ -170,7 +185,6 @@ class FirestoreService: ObservableObject {
     }
     
     func updateGameStatusOnEnd(game: Game, completion: @escaping (Error?) -> Void) {
-        let db = Firestore.firestore()
         let gameRef = db.collection("games").document(game.id)
         
         if game.timeElapsed == [0, 0, 0] {
@@ -197,7 +211,6 @@ class FirestoreService: ObservableObject {
     }
     
     func updateUserStatsOnGameEnd(game: Game, completion: @escaping (Error?) -> Void) async {
-        let db = Firestore.firestore()
         let usersRef = db.collection("users")
         let timePlayed = Double(game.timeElapsed[0] * 60 + game.timeElapsed[1] + (game.timeElapsed[2] > 30 ? 1 : 0))
         

@@ -278,7 +278,7 @@ struct OngoingGameView: View {
                                 }
                             }
                             .navigationDestination(isPresented: $isReadyToCashOut) {
-                                ContentView()
+                                HomeView()
                             }
                         }
                     }
