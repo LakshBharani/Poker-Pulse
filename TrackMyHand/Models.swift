@@ -9,6 +9,7 @@ import Foundation
 
 struct User: Identifiable, Codable {
     var id: String
+    var pin: String?
     var totalProfit: Double
     var isFavorite: Bool
     var profitData: [Double]

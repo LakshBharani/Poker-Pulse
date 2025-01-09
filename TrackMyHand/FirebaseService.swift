@@ -57,9 +57,9 @@ class FirestoreService: ObservableObject {
     }
     
     // create a user for the first time using id
-    func createUser(id: String, completion: @escaping (Result<User, Error>) -> Void) {
+    func createUser(id: String, pin: String = "", completion: @escaping (Result<User, Error>) -> Void) {
         do {
-            let user = User(id: id, totalProfit: 0, isFavorite: false, profitData: [0], totalWins: 0, timePlayed: 0, totalBuyIn: 0)
+            let user = User(id: id, pin: pin, totalProfit: 0, isFavorite: false, profitData: [0], totalWins: 0, timePlayed: 0, totalBuyIn: 0)
             let _ = try db.collection("users").document(user.id).setData(from: user)
             
         } catch _ {}

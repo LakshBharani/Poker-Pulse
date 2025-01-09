@@ -9,12 +9,17 @@ import SwiftUI
 
 struct PlayerManagementBar: View {
     @StateObject private var firestoreService = FirestoreService()
-    @State private var isPlayerIdAlertShown: Bool = false
-    @State private var isNewPlayerAlertShown: Bool = false
     @State private var playerId: String = ""
-    @State private var isDisabled: Bool = true
+    @State private var playerPin: String = ""
+    @State private var isVerifiedUser: Bool = false
+    @State private var isAddingNewPlayer: Bool = false
+    @State private var isOKDisabled: Bool = true
+    @State private var showNewPlayerAlert: Bool = false
+    @State private var showErrorAlert: Bool = false
+    @State private var errorMessage: String = ""
+    @State private var allUsers: [User] = []
     @Binding var game: Game
-    var allUsers: [User]
+    
     
     func logEvent(newEvent: Transaction) {
         if let playerIndex = game.players.firstIndex(where: { $0.id == newEvent.to }) {
@@ -39,83 +44,149 @@ struct PlayerManagementBar: View {
     }
     
     var body: some View {
-        HStack {
-            Button(action: {
-                isPlayerIdAlertShown = true
-            }) {
-                HStack {
-                    Label("Add Player", systemImage: "plus.circle")
-                        .font(.headline)
-                        .padding()
-                    Spacer()
-                }
-                .padding(.trailing)
-            }
-            .foregroundStyle(.orange)
-            .background(RoundedRectangle(cornerRadius: 10)
-                .foregroundStyle(.gray)
-                .opacity(0.2)
-            )
-            .alert("Add Player", isPresented: $isPlayerIdAlertShown) {
-                TextField("Enter player ID", text: $playerId)
-                    .autocorrectionDisabled(true)
-                    .onChange(of: playerId) { oldValue, newValue in
-                        playerId = newValue.uppercased().trimmingCharacters(in: .whitespacesAndNewlines)
-                        
-                        isDisabled = playerId.isEmpty ||
-                                     game.players.contains(where: { $0.id == playerId }) ||
-                                     !allUsers.contains(where: { $0.id == playerId })
-                    }
-                
-                Button("OK") {
-                    let newPlayer = Player(id: playerId, buyIn: 5.00, cashOut: 0.00, profit: 0.00)
-                    let transaction = Transaction(id: game.events.count, description: "player joined", from: "BANK", to: playerId, amount: String(format: "%.2f", newPlayer.buyIn))
-                    game.players.append(newPlayer)
-                    logEvent(newEvent: transaction)
-                    playerId = ""
-                }
-                .disabled(isDisabled)
-                
-                Button("Cancel", role: .cancel) {
-                    playerId = ""
-                }
-            }
+        VStack(alignment: .leading, spacing: 2) {
+            Text("Add Player")
+                .font(.title3).bold()
+                .foregroundStyle(.orange)
+                .padding(.bottom, 5)
+            Text("Enter Player ID & PIN of an existing player to add them to the game")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .padding(.bottom, 10)
             
-            Button(action: {
-                isNewPlayerAlertShown = true
-            }) {
-                Image(systemName: "person.crop.circle.fill.badge.plus")
-                    .foregroundStyle(.blue)
-                    .font(.system(size: 22))
-                    .frame(width: 50, height: 50)
-            }
-            .background(RoundedRectangle(cornerRadius: 10)
-                .foregroundStyle(.gray)
-                .opacity(0.2)
-            )
-            .alert("Create New Player", isPresented: $isNewPlayerAlertShown) {
-                TextField("Create player ID", text: $playerId)
-                    .autocorrectionDisabled(true)
-                    .onChange(of: playerId) { oldValue, newValue in
-                        playerId = newValue.uppercased().trimmingCharacters(in: .whitespacesAndNewlines)
+            HStack {
+                VStack {
+                    TextField("Player ID", text: $playerId)
+                        .font(.subheadline)
+                        .foregroundStyle(isVerifiedUser ? .gray : .primary)
+                        .padding()
+                        .background(Color.gray.opacity(0.1))
+                        .clipShape(RoundedRectangle(cornerRadius: 10))
+                        .padding(.bottom, 2)
+                        .onChange(of: playerId) { oldValue, newValue in
+                            playerId = newValue.trimmingCharacters(in: .whitespacesAndNewlines).uppercased()
+                            isVerifiedUser = false
+                        }
+                    
+                    if isVerifiedUser {
+                        TextField("PIN", text: $playerPin)
+                            .keyboardType(.numberPad)
+                            .font(.subheadline)
+                            .padding()
+                            .background(Color.gray.opacity(0.1))
+                            .clipShape(RoundedRectangle(cornerRadius: 10))
+                            .onChange(of: playerPin) { oldValue, newValue in
+                                playerPin = newValue.trimmingCharacters(in: .whitespacesAndNewlines)
+                            }
                     }
-                
-                Button("Create") {
-                    let newPlayer = Player(id: playerId, buyIn: 5.00, cashOut: 0.00, profit: 0.00)
-                    game.players.append(newPlayer)
-                    let transaction = Transaction(id: game.events.count, description: "player joined", from: "BANK", to: playerId, amount: String(format: "%.2f", newPlayer.buyIn))
-                    logEvent(newEvent: transaction)
-                    playerId = ""
-                    firestoreService.createUser(id: newPlayer.id) {_ in }
                 }
-                .disabled(playerId.isEmpty ||
-                          allUsers.contains(where: { $0.id == playerId }))
                 
-                Button("Cancel", role: .cancel) {
-                    playerId = ""
+                if isVerifiedUser {
+                    let isPwdMatching = allUsers.contains(where: { $0.id == playerId && $0.pin == playerPin })
+                    
+                    Button {
+                        if isPwdMatching {
+                            let newPlayer = Player(id: playerId, buyIn: 5.00, cashOut: 0.00, profit: 0.00)
+                            let transaction = Transaction(id: game.events.count, description: "player joined", from: "BANK", to: playerId, amount: String(format: "%.2f", newPlayer.buyIn))
+                            game.players.append(newPlayer)
+                            logEvent(newEvent: transaction)
+                            playerId = ""
+                            playerPin = ""
+                        } else {
+                            errorMessage = "Invalid Player Pin"
+                            showErrorAlert = true
+                        }
+                        
+                    } label: {
+                        VStack {
+                            Image(systemName: "plus")
+                        }
+                        .frame(maxWidth: 75, maxHeight: .infinity)
+                        .background(Color.orange.opacity(0.2))
+                        .foregroundColor(.orange)
+                        .cornerRadius(8)
+                    }
+                    .frame(maxHeight: .infinity)
+                } else {
+                    let inAllUsers = allUsers.contains(where: { $0.id == playerId })
+                    let inGamePlayers = game.players.contains(where: { $0.id == playerId })
+                    let isAlreadyAdded = inAllUsers && inGamePlayers
+                    
+                    Button {
+                        if !inAllUsers {
+                            showNewPlayerAlert = true
+                        } else if inAllUsers && !inGamePlayers {
+                            isVerifiedUser = true
+                            showErrorAlert = false
+                        } else if isAlreadyAdded {
+                            showErrorAlert = true
+                            errorMessage = "Player already added"
+                        } else {
+                            showErrorAlert = true
+                            errorMessage = "Player not found"
+                        }
+                        
+                        
+                    } label: {
+                        Text("Verify")
+                            .font(.subheadline).bold()
+                            .frame(maxWidth: 75, maxHeight: .infinity)
+                            .background(Color.orange.opacity(0.2))
+                            .foregroundColor(.orange)
+                            .cornerRadius(8)
+                    }
+                    .frame(maxHeight: .infinity)
+                    .alert("Error", isPresented: $showErrorAlert) {
+                        Button("OK", role: .cancel) {}
+                    } message: {
+                        Text(errorMessage)
+                    }
+                    .alert("Create Player", isPresented: $showNewPlayerAlert) {
+                        VStack {
+                            TextField("Enter a 3-10 digit PIN", text: $playerPin)
+                                .keyboardType(.numberPad)
+                                .onChange(of: playerPin) { oldValue, newValue in
+                                    if newValue.count > 10 {
+                                        playerPin = String(newValue.prefix(10))
+                                    } else if newValue.count < 3 {
+                                        isOKDisabled = true
+                                    } else {
+                                        playerPin = newValue.uppercased().trimmingCharacters(in: .whitespacesAndNewlines)
+                                        isOKDisabled = false
+                                    }
+                                }
+                        }
+                        
+                        Button("OK") {
+                            firestoreService.createUser(id: playerId, pin: playerPin) { _ in }
+                            let newPlayer = Player(id: playerId, buyIn: 5.00, cashOut: 0.00, profit: 0.00)
+                            let transaction = Transaction(id: game.events.count, description: "player joined", from: "BANK", to: playerId, amount: String(format: "%.2f", newPlayer.buyIn))
+                            game.players.append(newPlayer)
+                            logEvent(newEvent: transaction)
+                            playerId = ""
+                        }
+                        .disabled(isOKDisabled)
+                        
+                        Button("Cancel", role: .cancel) {
+                            playerId = ""
+                        }
+                    }
                 }
             }
+            .frame(maxHeight: .infinity)
+            
+            
         }
+        .padding(.vertical, 5)
+            
+            
+        
+        
         Divider()
+            .onAppear {
+                firestoreService.fetchUsers { users in
+                    allUsers = users
+                }
+            }
     }
 }

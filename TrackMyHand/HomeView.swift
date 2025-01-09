@@ -112,12 +112,17 @@ struct HomeView: View {
             .toolbar {
                 ToolbarItem {
                     Menu {
+                        Button("Show Login QR", systemImage: "qrcode") {}
                         
-                        NavigationLink(destination: JoinGroupView()) {
-                            Button("Switch Group", systemImage: "arrow.left.arrow.right") {}
-                        }
-
-                        Button("Exit Group", role: .destructive) {}
+                        Text("Groups coming soon...")
+                        
+//                        NavigationLink(destination: JoinGroupView()) {
+//                            Button("Switch Group", systemImage: "arrow.left.arrow.right") {}
+//                        }
+//                        .disabled(true)
+//
+//                        Button("Exit Group", role: .destructive) {}
+//                            .disabled(true)
 
                     } label: {
                         Label("Menu", systemImage: "ellipsis.circle")

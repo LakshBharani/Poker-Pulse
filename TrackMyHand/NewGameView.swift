@@ -8,6 +8,11 @@
 import SwiftUI
 
 struct NewGameView: View {
+    struct AuthData {
+        var pin: String = ""
+        var isValid: Bool = false
+    }
+    
     @State private var showTextField = false
     @State private var newPlayerUID: String = ""
     @State private var buyInAmount: String = "5"
@@ -15,15 +20,20 @@ struct NewGameView: View {
     @State private var isAllPlayersExisting: Bool = true
     @State private var showAlert = false
     @State private var allUsers: [User] = []
+    @State private var playerPins: [String: AuthData] = [:]
     @StateObject private var firestoreService = FirestoreService()
     @State private var startGame: Bool = false
     @State private var newGame: Game = Game(isActive: false, isGameEnded: false, id: "", timeElapsed: [0, 0, 0], gameCode: "", totalPot: 0.0, cashOut: 0, date: Date(), players: [], events: [])
     @State private var navigateToGame: Bool = false
+    @State private var playerPin: String = ""
+    @State private var isOKDisabled: Bool = true
 
     // Game details
     @State private var allPlayers: [Player] = []
     @State private var isQuickAddEnabled: Bool = false
     @State private var errorMessage = ""
+    
+    
 
     var body: some View {
         NavigationStack {
@@ -52,21 +62,36 @@ struct NewGameView: View {
                                 Label("Create User", systemImage: "person.crop.circle.fill.badge.plus")
                                     .foregroundStyle(.red)
                             }
-                            .alert("Create new user?", isPresented: $showAlert) {
-                                Button("Yes") {
-                                    newPlayerUID = newPlayerUID.uppercased().trimmingCharacters(in: .whitespacesAndNewlines)
-                                    if !(newPlayerUID.isEmpty) {
-                                        firestoreService.createUser(id: newPlayerUID) { _ in }
-                                        allUsers.append(User(id: newPlayerUID, totalProfit: 0, isFavorite: false, profitData: [0], totalWins: 0, timePlayed: 0, totalBuyIn: 0))
-                                        allPlayers.append(Player(id: newPlayerUID, buyIn: 5, cashOut: 0, profit: -5.00))
-                                        newPlayerUID = ""
-                                        isAllPlayersExisting = true
-                                    }
+                            .alert("Create Player", isPresented: $showAlert) {
+                                VStack {
+                                    TextField("Enter a 3-10 digit PIN", text: $playerPin)
+                                        .keyboardType(.numberPad)
+                                        .onChange(of: playerPin) { oldValue, newValue in
+                                            if newValue.count > 10 {
+                                                playerPin = String(newValue.prefix(10))
+                                            } else if newValue.count < 3 {
+                                                isOKDisabled = true
+                                            } else {
+                                                playerPin = newValue.uppercased().trimmingCharacters(in: .whitespacesAndNewlines)
+                                                isOKDisabled = false
+                                            }
+                                        }
                                 }
+                        
+                                Button("OK") {
+                                    firestoreService.createUser(id: newPlayerUID, pin: playerPin) { _ in }
+                                    allUsers.append(User(id: newPlayerUID, pin: playerPin, totalProfit: 0, isFavorite: false, profitData: [0], totalWins: 0, timePlayed: 0, totalBuyIn: 0))
+                                    allPlayers.append(Player(id: newPlayerUID, buyIn: 5, cashOut: 0, profit: -5.00))
+                                    newPlayerUID = ""
+                                }
+                                .disabled(isOKDisabled)
                                 
-                                Button("Cancel", role: .cancel) {}
-                                    .foregroundStyle(.red)
+                                Button("Cancel", role: .cancel) {
+                                    newPlayerUID = ""
+                                }
                             }
+                            
+                            
                         } else if (isAllPlayersUnique && !newPlayerUID.isEmpty) || newPlayerUID.isEmpty {
                             Button(action: {
                                 if !newPlayerUID.isEmpty {
@@ -97,10 +122,35 @@ struct NewGameView: View {
                             }
 
                         ForEach(allPlayers.reversed()) { player in
-                            Text(player.id)
+                            HStack {
+                                Text(player.id)
+                                    .font(.subheadline)
+                                    .foregroundStyle(.orange)
+                                    .bold()
+                                
+                                Spacer()
+                                
+                                SecureField("PIN", text: Binding(
+                                    get: { playerPins[player.id]?.pin ?? "" },
+                                    set: { newValue in
+                                        updatePlayerPin(playerID: player.id, newPin: newValue)
+                                    }
+                                ))
+                                .keyboardType(.numberPad)
                                 .font(.subheadline)
                                 .foregroundStyle(.orange)
                                 .bold()
+                                .frame(width: 100)
+                                
+                                // Show validation result (checkmark or X based on isValid)
+                                if let isValid = playerPins[player.id]?.isValid {
+                                    Image(systemName: isValid ? "checkmark.circle" : "xmark.circle")
+                                        .foregroundColor(isValid ? .green : .red)
+                                } else {
+                                    Image(systemName: "xmark.circle")
+                                        .foregroundColor(.red)
+                                }
+                            }
                                 .swipeActions(edge: .trailing, allowsFullSwipe: true) {
                                     Button(role: .destructive) {
                                         removePlayer(player)
@@ -124,7 +174,7 @@ struct NewGameView: View {
                     }
 
                 // Save button
-                    Button("Create Game", action: createGame)
+                    Button("Create Game", action: authenticateAllPlayers)
                         .disabled(allPlayers.count < 2)
                 }
                 .navigationTitle("Create Game")
@@ -204,6 +254,28 @@ struct NewGameView: View {
         firestoreService.fetchUsers { users in
             allUsers = users
         }
+    }
+    
+    private func updatePlayerPin(playerID: String, newPin: String) {
+        let isValid = playerPins[playerID]?.isValid ?? false
+        playerPins[playerID] = AuthData(pin: newPin, isValid: isValid)
+    }
+    
+    private func authenticateAllPlayers() {
+        var isAllValid = true
+        for user in allPlayers {
+            let playerID = allUsers.first(where: { $0.id == user.id })?.pin ?? ""
+            let isValid = authenticate(enteredPin: playerPins[user.id]?.pin ?? "", actualPin: playerID)
+            playerPins[user.id]?.isValid = isValid
+            isAllValid = isAllValid && isValid
+        }
+        if isAllValid {
+            createGame()
+        }
+    }
+
+    private func authenticate(enteredPin: String, actualPin: String) -> Bool {
+        return enteredPin == actualPin
     }
 }
 

@@ -24,7 +24,7 @@ struct OngoingGameView: View {
     var allUsers: [User]
     
     var body: some View {
-        @StateObject var gameViewModel = GameViewModel(game: game)
+//        @StateObject var gameViewModel = GameViewModel(game: game)
         
         NavigationStack {
             ZStack {
@@ -141,7 +141,7 @@ struct OngoingGameView: View {
                                         logEvent(newEvent: event)
                                         isMakingTransaction = game.isGameEnded
                                         transactionAmount = ""
-                                        gameViewModel.recalculatePredictions()
+//                                        gameViewModel.recalculatePredictions()
                                     }, label: {
                                         RoundedRectangle(cornerRadius: 8)
                                             .foregroundStyle(.blue).opacity(0.2)
@@ -238,7 +238,7 @@ struct OngoingGameView: View {
                     
                     if game.isActive {
                         if !game.isGameEnded {
-                            PlayerManagementBar(game: $game, allUsers: allUsers)
+                            PlayerManagementBar(game: $game)
                         } else {
                             HStack {
                                 Button(action: {
