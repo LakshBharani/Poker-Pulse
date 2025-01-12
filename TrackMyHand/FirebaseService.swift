@@ -233,4 +233,25 @@ class FirestoreService: ObservableObject {
         completion(nil)
     }
     
+    func toggleFavorite(userID: String, completion: @escaping (Error?) -> Void) {
+        let userRef = db.collection("users").document(userID)
+        
+        userRef.getDocument { document, error in
+            if let error = error {
+                completion(error)
+                return
+            }
+            
+            guard let document = document, document.exists,
+                  let currentFavorite = document.data()?["isFavorite"] as? Bool else {
+                completion(NSError(domain: "", code: 404, userInfo: [NSLocalizedDescriptionKey: "User not found or invalid data"]))
+                return
+            }
+            
+            userRef.updateData(["isFavorite": !currentFavorite]) { error in
+                completion(error)
+            }
+        }
+    }
+    
 }

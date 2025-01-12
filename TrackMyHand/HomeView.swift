@@ -113,6 +113,7 @@ struct HomeView: View {
                 ToolbarItem {
                     Menu {
                         Button("Show Login QR", systemImage: "qrcode") {}
+                            .disabled(true)
                         
                         Text("Groups coming soon...")
                         

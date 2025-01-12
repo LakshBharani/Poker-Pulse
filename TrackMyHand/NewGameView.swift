@@ -32,6 +32,7 @@ struct NewGameView: View {
     @State private var allPlayers: [Player] = []
     @State private var isQuickAddEnabled: Bool = false
     @State private var errorMessage = ""
+    @State private var favorites: [String] = []
     
     
 
@@ -89,11 +90,14 @@ struct NewGameView: View {
                                 Button("Cancel", role: .cancel) {
                                     newPlayerUID = ""
                                 }
+                            } message : {
+                                Text("Player must set a 3-10 digit pin.\nIt will be used as their login credentials.")
                             }
                             
                             
                         } else if (isAllPlayersUnique && !newPlayerUID.isEmpty) || newPlayerUID.isEmpty {
                             Button(action: {
+                                let isFavorite = allUsers.first(where: { $0.id == newPlayerUID })?.isFavorite ?? false
                                 if !newPlayerUID.isEmpty {
                                     newPlayerUID = newPlayerUID.trimmingCharacters(in: .whitespacesAndNewlines)
                                     let newPlayer = Player(id: newPlayerUID, buyIn: 5, cashOut: 0, profit: -5.00)
@@ -158,6 +162,16 @@ struct NewGameView: View {
                                         Label("Delete", systemImage: "trash")
                                     }
                                 }
+                                .swipeActions(edge: .leading, allowsFullSwipe: true) {
+                                    Button {
+                                        toggleFavorite(userID: player.id)
+                                        
+                                    } label: {
+                                        Label("isFavorite", systemImage: "star")
+                                            .foregroundStyle(.white)
+                                            .tint(player.isFavorite ? .orange : .blue)
+                                    }
+                                }
                         }
                     }
 
@@ -189,7 +203,7 @@ struct NewGameView: View {
 
     // MARK: - Helper Functions
     private func quickAddFavorites() {
-        let favorites = ["LAKSH", "ATHARV", "SAHAJ", "USMAAN", "AREEB", "SAIF", "ANIRUDH", "LAKSHYA"]
+        let favorites = allUsers.filter { $0.isFavorite }.map { $0.id }
         allPlayers = favorites.map { Player(id: $0, buyIn: 5, cashOut: 0, profit: -5.00) }
     }
 
@@ -221,6 +235,14 @@ struct NewGameView: View {
 
     private func removePlayer(_ player: Player) {
         allPlayers.removeAll { $0.id == player.id }
+    }
+    
+    private func toggleFavorite(userID: String) {
+        firestoreService.toggleFavorite(userID: userID) { _  in }
+        if let index = allUsers.firstIndex(where: { $0.id == userID }) {
+            allUsers[index].isFavorite.toggle()
+            favorites = allUsers.filter { $0.isFavorite }.map { $0.id }
+        }
     }
 
     private func createGame() {

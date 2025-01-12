@@ -49,7 +49,7 @@ struct PlayerManagementBar: View {
                 .font(.title3).bold()
                 .foregroundStyle(.orange)
                 .padding(.bottom, 5)
-            Text("Enter Player ID & PIN of an existing player to add them to the game")
+            Text("Enter Player ID & PIN of an existing player to add them to the game. To create a new player, create a unique ID & PIN and add them to the game.")
                 .font(.caption)
                 .foregroundStyle(.secondary)
                 .padding(.bottom, 10)
@@ -170,6 +170,8 @@ struct PlayerManagementBar: View {
                         Button("Cancel", role: .cancel) {
                             playerId = ""
                         }
+                    } message: {
+                        Text("Player must set a 3-10 digit pin.\nIt will be used as their login credentials.")
                     }
                 }
             }
