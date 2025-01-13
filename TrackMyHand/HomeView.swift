@@ -7,6 +7,7 @@
 
 import SwiftUI
 import CoreData
+import GoogleMobileAds
 
 
 struct HomeView: View {
@@ -117,14 +118,14 @@ struct HomeView: View {
                         
                         Text("Groups coming soon...")
                         
-//                        NavigationLink(destination: JoinGroupView()) {
-//                            Button("Switch Group", systemImage: "arrow.left.arrow.right") {}
-//                        }
-//                        .disabled(true)
-//
-//                        Button("Exit Group", role: .destructive) {}
-//                            .disabled(true)
-
+                        //                        NavigationLink(destination: JoinGroupView()) {
+                        //                            Button("Switch Group", systemImage: "arrow.left.arrow.right") {}
+                        //                        }
+                        //                        .disabled(true)
+                        //
+                        //                        Button("Exit Group", role: .destructive) {}
+                        //                            .disabled(true)
+                        
                     } label: {
                         Label("Menu", systemImage: "ellipsis.circle")
                     }
@@ -135,6 +136,7 @@ struct HomeView: View {
             reloadData()
         }
     }
+
     
     func reloadData() {
         firestoreService.fetchLeaderboard { users in
@@ -164,7 +166,6 @@ struct HomeView: View {
         }
     }
 }
-
 
 
 #Preview {

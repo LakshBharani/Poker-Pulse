@@ -33,13 +33,10 @@ struct NewGameView: View {
     @State private var isQuickAddEnabled: Bool = false
     @State private var errorMessage = ""
     @State private var favorites: [String] = []
-    
-    
 
     var body: some View {
         NavigationStack {
             ZStack {
-                
                 LinearGradient(
                     gradient: Gradient(colors: [.orange.opacity(0.2), .black]),
                     startPoint: .topLeading,
@@ -97,7 +94,6 @@ struct NewGameView: View {
                             
                         } else if (isAllPlayersUnique && !newPlayerUID.isEmpty) || newPlayerUID.isEmpty {
                             Button(action: {
-                                let isFavorite = allUsers.first(where: { $0.id == newPlayerUID })?.isFavorite ?? false
                                 if !newPlayerUID.isEmpty {
                                     newPlayerUID = newPlayerUID.trimmingCharacters(in: .whitespacesAndNewlines)
                                     let newPlayer = Player(id: newPlayerUID, buyIn: 5, cashOut: 0, profit: -5.00)
@@ -165,12 +161,13 @@ struct NewGameView: View {
                                 .swipeActions(edge: .leading, allowsFullSwipe: true) {
                                     Button {
                                         toggleFavorite(userID: player.id)
-                                        
                                     } label: {
-                                        Label("isFavorite", systemImage: "star")
-                                            .foregroundStyle(.white)
-                                            .tint(player.isFavorite ? .orange : .blue)
+                                        Label(
+                                            isInFavorites(userID: player.id) ? "Unfavorite" : "Favorite",
+                                            systemImage: isInFavorites(userID: player.id) ? "star.fill" : "star"
+                                        )
                                     }
+                                    .tint(isInFavorites(userID: player.id) ? .orange : .blue)
                                 }
                         }
                     }
@@ -198,6 +195,7 @@ struct NewGameView: View {
                 }
             }
         }
+        .scrollIndicators(.hidden)
         .scrollContentBackground(.hidden)
     }
 
@@ -237,12 +235,27 @@ struct NewGameView: View {
         allPlayers.removeAll { $0.id == player.id }
     }
     
+    private func initializeFavorites() {
+        favorites = allUsers.filter { $0.isFavorite }.map { $0.id }
+    }
+
     private func toggleFavorite(userID: String) {
-        firestoreService.toggleFavorite(userID: userID) { _  in }
         if let index = allUsers.firstIndex(where: { $0.id == userID }) {
+            // Toggle the isFavorite flag
             allUsers[index].isFavorite.toggle()
             favorites = allUsers.filter { $0.isFavorite }.map { $0.id }
+            // Update Firestore to reflect the change
+            firestoreService.toggleFavorite(userID: userID) { error in
+                if (error != nil) {
+                    initializeFavorites()
+                }
+            }
         }
+    }
+
+
+    private func isInFavorites(userID: String) -> Bool {
+        favorites.contains(userID)
     }
 
     private func createGame() {
@@ -275,8 +288,11 @@ struct NewGameView: View {
     private func fetchUsers() {
         firestoreService.fetchUsers { users in
             allUsers = users
+            favorites = allUsers.filter { $0.isFavorite }.map { $0.id }
+            print(favorites) // Ensure favorites are being populated correctly
         }
     }
+
     
     private func updatePlayerPin(playerID: String, newPin: String) {
         let isValid = playerPins[playerID]?.isValid ?? false

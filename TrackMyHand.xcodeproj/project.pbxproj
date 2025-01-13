@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		8E0C81F99347C0BE0F8F347D /* Pods_TrackMyHand.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E9E7EA78AFB11F0592D08B68 /* Pods_TrackMyHand.framework */; };
 		B83ECF3C2D0882E200679880 /* FirebaseAnalytics in Frameworks */ = {isa = PBXBuildFile; productRef = B83ECF3B2D0882E200679880 /* FirebaseAnalytics */; };
 		B83ECF3E2D0882E200679880 /* FirebaseAnalyticsSwift in Frameworks */ = {isa = PBXBuildFile; productRef = B83ECF3D2D0882E200679880 /* FirebaseAnalyticsSwift */; };
 		B83ECF402D0882E200679880 /* FirebaseFirestoreSwift in Frameworks */ = {isa = PBXBuildFile; productRef = B83ECF3F2D0882E200679880 /* FirebaseFirestoreSwift */; };
@@ -16,12 +17,28 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		4AFFB34F3E6D6546F0EED604 /* Pods-TrackMyHand.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-TrackMyHand.debug.xcconfig"; path = "Target Support Files/Pods-TrackMyHand/Pods-TrackMyHand.debug.xcconfig"; sourceTree = "<group>"; };
 		B8E857692CEC735000BF173E /* TrackMyHand.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = TrackMyHand.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		D22232E423781D8F875C4434 /* Pods-TrackMyHand.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-TrackMyHand.release.xcconfig"; path = "Target Support Files/Pods-TrackMyHand/Pods-TrackMyHand.release.xcconfig"; sourceTree = "<group>"; };
+		E9E7EA78AFB11F0592D08B68 /* Pods_TrackMyHand.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_TrackMyHand.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
+
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		B82F79502D34993E00C817E9 /* Exceptions for "TrackMyHand" folder in "TrackMyHand" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = B8E857682CEC735000BF173E /* TrackMyHand */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		B8E8576B2CEC735000BF173E /* TrackMyHand */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				B82F79502D34993E00C817E9 /* Exceptions for "TrackMyHand" folder in "TrackMyHand" target */,
+			);
 			path = TrackMyHand;
 			sourceTree = "<group>";
 		};
@@ -38,18 +55,29 @@
 				B8E857812CEC752200BF173E /* FirebaseAuth in Frameworks */,
 				B83ECF3E2D0882E200679880 /* FirebaseAnalyticsSwift in Frameworks */,
 				B83ECF402D0882E200679880 /* FirebaseFirestoreSwift in Frameworks */,
+				8E0C81F99347C0BE0F8F347D /* Pods_TrackMyHand.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		9FC16B7C77073664A33A1B18 /* Pods */ = {
+			isa = PBXGroup;
+			children = (
+				4AFFB34F3E6D6546F0EED604 /* Pods-TrackMyHand.debug.xcconfig */,
+				D22232E423781D8F875C4434 /* Pods-TrackMyHand.release.xcconfig */,
+			);
+			path = Pods;
+			sourceTree = "<group>";
+		};
 		B8E857602CEC735000BF173E = {
 			isa = PBXGroup;
 			children = (
 				B8E8576B2CEC735000BF173E /* TrackMyHand */,
 				B8E8577D2CEC751D00BF173E /* Frameworks */,
 				B8E8576A2CEC735000BF173E /* Products */,
+				9FC16B7C77073664A33A1B18 /* Pods */,
 			);
 			sourceTree = "<group>";
 		};
@@ -64,6 +92,7 @@
 		B8E8577D2CEC751D00BF173E /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				E9E7EA78AFB11F0592D08B68 /* Pods_TrackMyHand.framework */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
@@ -75,9 +104,11 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = B8E857772CEC735000BF173E /* Build configuration list for PBXNativeTarget "TrackMyHand" */;
 			buildPhases = (
+				6A4866B9D78B851A9CF431EC /* [CP] Check Pods Manifest.lock */,
 				B8E857652CEC735000BF173E /* Sources */,
 				B8E857662CEC735000BF173E /* Frameworks */,
 				B8E857672CEC735000BF173E /* Resources */,
+				877CF594C864CBBB84FD692C /* [CP] Copy Pods Resources */,
 			);
 			buildRules = (
 			);
@@ -107,7 +138,7 @@
 			attributes = {
 				BuildIndependentTargetsInParallel = 1;
 				LastSwiftUpdateCheck = 1610;
-				LastUpgradeCheck = 1610;
+				LastUpgradeCheck = 1620;
 				TargetAttributes = {
 					B8E857682CEC735000BF173E = {
 						CreatedOnToolsVersion = 16.1;
@@ -145,6 +176,48 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXResourcesBuildPhase section */
+
+/* Begin PBXShellScriptBuildPhase section */
+		6A4866B9D78B851A9CF431EC /* [CP] Check Pods Manifest.lock */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+				"${PODS_PODFILE_DIR_PATH}/Podfile.lock",
+				"${PODS_ROOT}/Manifest.lock",
+			);
+			name = "[CP] Check Pods Manifest.lock";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+				"$(DERIVED_FILE_DIR)/Pods-TrackMyHand-checkManifestLockResult.txt",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
+			showEnvVarsInLog = 0;
+		};
+		877CF594C864CBBB84FD692C /* [CP] Copy Pods Resources */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-TrackMyHand/Pods-TrackMyHand-resources-${CONFIGURATION}-input-files.xcfilelist",
+			);
+			name = "[CP] Copy Pods Resources";
+			outputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-TrackMyHand/Pods-TrackMyHand-resources-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-TrackMyHand/Pods-TrackMyHand-resources.sh\"\n";
+			showEnvVarsInLog = 0;
+		};
+/* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
 		B8E857652CEC735000BF173E /* Sources */ = {
@@ -194,7 +267,7 @@
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
-				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				GCC_C_LANGUAGE_STANDARD = gnu17;
 				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_NO_COMMON_BLOCKS = YES;
@@ -257,7 +330,7 @@
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
-				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				GCC_C_LANGUAGE_STANDARD = gnu17;
 				GCC_NO_COMMON_BLOCKS = YES;
 				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
@@ -278,6 +351,7 @@
 		};
 		B8E857782CEC735000BF173E /* Debug */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = 4AFFB34F3E6D6546F0EED604 /* Pods-TrackMyHand.debug.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
@@ -287,6 +361,7 @@
 				DEVELOPMENT_TEAM = 967QCW5DWY;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = TrackMyHand/Info.plist;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.entertainment";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
@@ -308,6 +383,7 @@
 		};
 		B8E857792CEC735000BF173E /* Release */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = D22232E423781D8F875C4434 /* Pods-TrackMyHand.release.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
@@ -317,6 +393,7 @@
 				DEVELOPMENT_TEAM = 967QCW5DWY;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = TrackMyHand/Info.plist;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.entertainment";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
