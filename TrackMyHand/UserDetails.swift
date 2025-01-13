@@ -30,7 +30,7 @@ struct UserDetails: View {
         let averageBuyIn = String(format: "%.2f", user.totalBuyIn / Double(user.profitData.count - 1))
         let screenGradient = user.totalProfit >= 0 ? [Color.green.opacity(0.25), Color.black] : [Color.red.opacity(0.25), Color.black]
         
-        NavigationView {
+        NavigationStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: 10) {
                     HStack {

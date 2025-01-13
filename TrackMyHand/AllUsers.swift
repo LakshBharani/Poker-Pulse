@@ -21,7 +21,7 @@ struct AllUsers: View {
         }
     
     var body: some View {
-        NavigationView {
+        NavigationStack {
             ZStack {
                 LinearGradient(
                     gradient: Gradient(colors: [.green.opacity(0.25), .black]),
