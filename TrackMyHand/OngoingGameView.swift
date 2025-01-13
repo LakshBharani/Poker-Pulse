@@ -28,7 +28,6 @@ struct OngoingGameView: View {
         
         NavigationStack {
             ZStack {
-                
                 LinearGradient(
                     gradient: Gradient(colors: [.orange.opacity(0.2), .black]),
                     startPoint: .topLeading,
@@ -212,6 +211,8 @@ struct OngoingGameView: View {
                         }
                     }
                     
+                    PlacableAdBanner(adIdentifier: "banner0")
+                    
                     Section(header: HStack {
                         Text("Players (\(game.isGameEnded ? game.players.count : game.players.count - 1))")
                             .font(.subheadline)
@@ -235,6 +236,8 @@ struct OngoingGameView: View {
                             }
                             Divider()
                         }
+                    
+                    PlacableAdBanner(adIdentifier: "banner0")
                     
                     if game.isActive {
                         if !game.isGameEnded {
@@ -282,7 +285,6 @@ struct OngoingGameView: View {
                             }
                         }
                     }
-                    
                     
                     EventLogger(game: game)
                 }

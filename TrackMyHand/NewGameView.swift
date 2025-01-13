@@ -81,6 +81,7 @@ struct NewGameView: View {
                                     allUsers.append(User(id: newPlayerUID, pin: playerPin, totalProfit: 0, isFavorite: false, profitData: [0], totalWins: 0, timePlayed: 0, totalBuyIn: 0))
                                     allPlayers.append(Player(id: newPlayerUID, buyIn: 5, cashOut: 0, profit: -5.00))
                                     newPlayerUID = ""
+                                    playerPin = ""
                                 }
                                 .disabled(isOKDisabled)
                                 
@@ -194,6 +195,7 @@ struct NewGameView: View {
                     OngoingGameView(game: newGame, allUsers: allUsers)
                 }
             }
+            PlacableAdBanner(adIdentifier: "banner0")
         }
         .scrollIndicators(.hidden)
         .scrollContentBackground(.hidden)

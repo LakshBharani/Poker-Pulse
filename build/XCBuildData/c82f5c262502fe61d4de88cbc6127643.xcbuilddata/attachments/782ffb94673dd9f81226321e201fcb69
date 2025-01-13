@@ -1,0 +1,5 @@
+ extern const unsigned char Pods_TrackMyHandVersionString[];
+ extern const double Pods_TrackMyHandVersionNumber;
+
+ const unsigned char Pods_TrackMyHandVersionString[] __attribute__ ((used)) = "@(#)PROGRAM:Pods_TrackMyHand  PROJECT:Pods-1" "\n";
+ const double Pods_TrackMyHandVersionNumber __attribute__ ((used)) = (double)1.;

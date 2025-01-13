@@ -69,7 +69,7 @@ struct PlayerManagementBar: View {
                         }
                     
                     if isVerifiedUser {
-                        TextField("PIN", text: $playerPin)
+                        SecureField("PIN", text: $playerPin)
                             .keyboardType(.numberPad)
                             .font(.subheadline)
                             .padding()
@@ -92,6 +92,8 @@ struct PlayerManagementBar: View {
                             logEvent(newEvent: transaction)
                             playerId = ""
                             playerPin = ""
+                            errorMessage = ""
+                            showErrorAlert = false
                         } else {
                             errorMessage = "Invalid Player Pin"
                             showErrorAlert = true

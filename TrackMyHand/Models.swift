@@ -54,3 +54,9 @@ struct Group: Identifiable, Codable {
     var users: [String]
 }
 
+struct AdSettings: Codable {
+    var adEnabled: Bool
+    var height: Double
+    var id: String
+}
+

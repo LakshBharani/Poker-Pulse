@@ -1,0 +1,15 @@
+{
+  "" : {
+    "const-values" : "/Users/lakshbharani/Developer/Dev/XCode/TrackMyHand/build/Pods.build/Release-iphoneos/Google-Mobile-Ads-SDK.build/Objects-normal/arm64/Google-Mobile-Ads-SDK-master.swiftconstvalues",
+    "dependencies" : "/Users/lakshbharani/Developer/Dev/XCode/TrackMyHand/build/Pods.build/Release-iphoneos/Google-Mobile-Ads-SDK.build/Objects-normal/arm64/Google-Mobile-Ads-SDK-master.d",
+    "diagnostics" : "/Users/lakshbharani/Developer/Dev/XCode/TrackMyHand/build/Pods.build/Release-iphoneos/Google-Mobile-Ads-SDK.build/Objects-normal/arm64/Google-Mobile-Ads-SDK-master.dia",
+    "emit-module-dependencies" : "/Users/lakshbharani/Developer/Dev/XCode/TrackMyHand/build/Pods.build/Release-iphoneos/Google-Mobile-Ads-SDK.build/Objects-normal/arm64/Google-Mobile-Ads-SDK-master-emit-module.d",
+    "emit-module-diagnostics" : "/Users/lakshbharani/Developer/Dev/XCode/TrackMyHand/build/Pods.build/Release-iphoneos/Google-Mobile-Ads-SDK.build/Objects-normal/arm64/Google-Mobile-Ads-SDK-master-emit-module.dia",
+    "swift-dependencies" : "/Users/lakshbharani/Developer/Dev/XCode/TrackMyHand/build/Pods.build/Release-iphoneos/Google-Mobile-Ads-SDK.build/Objects-normal/arm64/Google-Mobile-Ads-SDK-master.swiftdeps"
+  },
+  "/Users/lakshbharani/Developer/Dev/XCode/TrackMyHand/Pods/Google-Mobile-Ads-SDK/Sources/GoogleMobileAdsPlaceholder.swift" : {
+    "index-unit-output-path" : "/Pods.build/Release-iphoneos/Google-Mobile-Ads-SDK.build/Objects-normal/arm64/GoogleMobileAdsPlaceholder.o",
+    "llvm-bc" : "/Users/lakshbharani/Developer/Dev/XCode/TrackMyHand/build/Pods.build/Release-iphoneos/Google-Mobile-Ads-SDK.build/Objects-normal/arm64/GoogleMobileAdsPlaceholder.bc",
+    "object" : "/Users/lakshbharani/Developer/Dev/XCode/TrackMyHand/build/Pods.build/Release-iphoneos/Google-Mobile-Ads-SDK.build/Objects-normal/arm64/GoogleMobileAdsPlaceholder.o"
+  }
+}

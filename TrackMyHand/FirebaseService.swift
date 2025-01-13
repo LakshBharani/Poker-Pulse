@@ -12,6 +12,34 @@ import SwiftUICore
 class FirestoreService: ObservableObject {
     private let db = Firestore.firestore()
     
+    func fetchAdSettings(adIdentifier: String, completion: @escaping (AdSettings?) -> Void) {
+        let collectionRef = db.collection("adSettings")
+        let docRef = collectionRef.document(adIdentifier)
+        
+        docRef.getDocument { document, error in
+            if let error = error {
+                print("Error fetching document: \(error)")
+                completion(nil)
+                return
+            }
+            guard let document = document, document.exists,
+                  let data = document.data() else {
+                print("Document does not exist or data is invalid")
+                completion(nil)
+                return
+            }
+            do {
+                let jsonData = try JSONSerialization.data(withJSONObject: data)
+                let adSettings = try JSONDecoder().decode(AdSettings.self, from: jsonData)
+                completion(adSettings)
+            } catch {
+                print("Error decoding AdSettings: \(error)")
+                completion(nil)
+            }
+        }
+    }
+
+    
     // create new group
     func createGroup(userId: String, name: String, completion: @escaping ([User]) -> Void) {
         do {
@@ -41,6 +69,7 @@ class FirestoreService: ObservableObject {
                 let users = documents.compactMap { try? $0.data(as: User.self) }
                 completion(users)
             }
+        
     }
     
     // fetch total number of users

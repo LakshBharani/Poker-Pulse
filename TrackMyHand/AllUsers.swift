@@ -63,10 +63,11 @@ struct AllUsers: View {
                         .searchable(text: $searchText)
                         .scrollContentBackground(.hidden)
                     }
+                    PlacableAdBanner(adIdentifier: "banner0")
                 }
             }
         }
-        .navigationTitle("All Users")
+        .navigationTitle("All Users")   
         .onAppear() {
             firestoreService.fetchUsers { users in
                 self.users = users

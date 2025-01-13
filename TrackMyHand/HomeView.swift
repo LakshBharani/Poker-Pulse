@@ -20,6 +20,7 @@ struct HomeView: View {
     @State private var totalGames = 0
     
     
+    
     var body: some View {
         NavigationStack {
             ZStack {
@@ -131,6 +132,7 @@ struct HomeView: View {
                     }
                 }
             }
+            PlacableAdBanner(adIdentifier: "banner0")
         }
         .onAppear {
             reloadData()
