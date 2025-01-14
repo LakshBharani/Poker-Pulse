@@ -182,9 +182,6 @@ struct PlayerManagementBar: View {
             
         }
         .padding(.vertical, 5)
-            
-            
-        
         
         Divider()
             .onAppear {

@@ -18,6 +18,8 @@ struct HomeView: View {
     @State private var gamesFetched = 5
     @State private var totalUsers = 0
     @State private var totalGames = 0
+    @State private var signOutAlert: Bool = false
+    @State private var isSignedOut: Bool = false
     
     
     
@@ -127,8 +129,22 @@ struct HomeView: View {
                         //                        Button("Exit Group", role: .destructive) {}
                         //                            .disabled(true)
                         
+                        Button("Sign Out", systemImage: "rectangle.portrait.and.arrow.right", role: .destructive) {
+                            signOutAlert = true
+                        }
                     } label: {
                         Label("Menu", systemImage: "ellipsis.circle")
+                    }
+                    .alert("Sign Out", isPresented: $signOutAlert) {
+                        Button("Cancel", role: .cancel) { }
+                        Button("OK") {
+                            isSignedOut = true
+                        }
+                    } message: {
+                        Text("Are you sure you want to sign out?")
+                    }
+                    .navigationDestination(isPresented: $isSignedOut) {
+                        AuthView()
                     }
                 }
             }
