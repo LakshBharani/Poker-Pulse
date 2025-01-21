@@ -145,6 +145,7 @@ struct HomeView: View {
                     }
                     .navigationDestination(isPresented: $isSignedOut) {
                         AuthView()
+                            .transition(.slide)
                     }
                 }
             }

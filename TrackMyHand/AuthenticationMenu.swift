@@ -24,12 +24,11 @@ struct AuthenticationMenu: View {
     
     var body: some View {
         VStack(alignment: .leading) {
-            Spacer()
             Text(isSignUp ? "Sign Up" : "Sign In")
                 .font(.title3).bold()
                 .foregroundStyle(.orange)
                 .padding(.bottom, 5)
-            Text(isSignUp ? "Create a unique user ID & PIN to sign up. If you already have an account, please sign in." : "Enter Player ID & PIN of an existing player to sign in. If you don't have an account yet, please sign up.")
+            Text(isSignUp ? "Create a unique user ID & PIN to sign up. If you already have an account, please sign in." : "Enter User ID & PIN of an existing player to sign in. If you don't have an account yet, please sign up.")
                 .font(.caption)
                 .foregroundStyle(.secondary)
                 .padding(.bottom, 10)
@@ -37,7 +36,7 @@ struct AuthenticationMenu: View {
             if isSignUp {
                 HStack {
                     HStack {
-                        TextField("Create Player ID", text: $userId)
+                        TextField("Create User ID", text: $userId)
                             .font(.subheadline)
                             .foregroundStyle(isVerifiedUser ? .gray : .primary)
                             .onChange(of: userId) { oldValue, newValue in
@@ -55,7 +54,7 @@ struct AuthenticationMenu: View {
                     .clipShape(RoundedRectangle(cornerRadius: 10))
                     
                     HStack {
-                        TextField("3-10 digit PIN", text: $pin)
+                        SecureField("3-10 digit PIN", text: $pin)
                             .font(.subheadline)
                             .foregroundStyle(isVerifiedUser ? .gray : .primary)
                             .onChange(of: pin) { oldValue, newValue in
@@ -77,7 +76,7 @@ struct AuthenticationMenu: View {
                 ZStack {
                     if isVerifiedUser && isPinValid {
                         HStack {
-                            TextField("Re enter PIN", text: $reEnterPin)
+                            SecureField("Confirm PIN", text: $reEnterPin)
                                 .font(.subheadline)
                                 .foregroundStyle(isPinMatch ? .gray : .primary)
                                 .onChange(of: reEnterPin) { oldValue, newValue in
@@ -119,7 +118,7 @@ struct AuthenticationMenu: View {
                 .padding(.bottom, 5)
             } else {
                 HStack {
-                    TextField("Player ID", text: $userId)
+                    TextField("User ID", text: $userId)
                         .font(.subheadline)
                         .foregroundStyle(isVerifiedUser ? .gray : .primary)
                         .onChange(of: userId) { oldValue, newValue in
@@ -139,7 +138,7 @@ struct AuthenticationMenu: View {
                 
                 ZStack {
                     if isVerifiedUser {
-                        TextField("PIN", text: $pin)
+                        SecureField("PIN", text: $pin)
                             .keyboardType(.numberPad)
                             .font(.subheadline)
                             .foregroundStyle(isVerifiedUser ? .gray : .primary)
@@ -187,7 +186,6 @@ struct AuthenticationMenu: View {
                     .font(.subheadline)
                     .fontWeight(.medium)
                 }
-                .padding(.bottom, 50)
                 .padding(.vertical, 5)
             } else {
                 Button(action: {
@@ -214,6 +212,7 @@ struct AuthenticationMenu: View {
                         }
                         .navigationDestination(isPresented: $isReadyToNavigate) {
                             HomeView()
+                                .transition(.slide)
                         }
                 }
                 .foregroundStyle(.orange)

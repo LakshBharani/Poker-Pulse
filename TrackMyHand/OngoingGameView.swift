@@ -282,6 +282,7 @@ struct OngoingGameView: View {
                             }
                             .navigationDestination(isPresented: $isReadyToCashOut) {
                                 HomeView()
+                                    .transition(.slide)
                             }
                         }
                     }
@@ -311,13 +312,15 @@ struct OngoingGameView: View {
             
             game.events.append(newEvent)
             
-            if newEvent.to != "BANK" {
+            if newEvent.from == "BANK" {
+                game.totalPot += Double(newEvent.amount)!
+            } else {
                 game.totalPot += Double(newEvent.amount)!
                 game.cashOut += Double(newEvent.amount)!
             }
             
-            if newEvent.description == "ingame-cashout" {
-                game.cashOut += Double(newEvent.amount)!
+            if newEvent.to == "BANK" {
+                game.totalPot -= Double(newEvent.amount)!
             }
             
         
@@ -438,7 +441,7 @@ struct TransactionView: View {
 
 
 #Preview {
-    OngoingGameView(game: Game(isActive: true, isGameEnded: false, id: "7B97E339-3EEF-4431-B6A7-85681B64D002", timeElapsed: [0, 0, 0], gameCode: "7B9002", totalPot: 40.0, cashOut: 0, date: Date(), players: [TrackMyHand.Player(id: "LAKSH", buyIn: 5.0, cashOut: 0.0, profit: -5.0), TrackMyHand.Player(id: "ATHARV", buyIn: 5.0, cashOut: 0.0, profit: -5.0), TrackMyHand.Player(id: "SAHAJ", buyIn: 5.0, cashOut: 0.0, profit: -5.0), TrackMyHand.Player(id: "USMAAN", buyIn: 5.0, cashOut: 0.0, profit: -5.0), TrackMyHand.Player(id: "AREEB", buyIn: 5.0, cashOut: 0.0, profit: -5.0), TrackMyHand.Player(id: "SAIF", buyIn: 5.0, cashOut: 0.0, profit: -5.0), TrackMyHand.Player(id: "ANIRUDH", buyIn: 5.0, cashOut: 0.0, profit: -5.0), TrackMyHand.Player(id: "LAKSHYA", buyIn: 5.0, cashOut: 0.0, profit: -5.0)], events: []),
+    OngoingGameView(game: Game(isActive: true, isGameEnded: false, id: "7B97E339-3EEF-4431-B6A7-85681B64D002", timeElapsed: [0, 0, 0], gameCode: "7B9002", totalPot: 40.0, cashOut: 0, date: Date(), players: [TrackMyHand.Player(id: "LA", buyIn: 5.0, cashOut: 0.0, profit: -5.0), TrackMyHand.Player(id: "AT", buyIn: 5.0, cashOut: 0.0, profit: -5.0), TrackMyHand.Player(id: "SAI", buyIn: 5.0, cashOut: 0.0, profit: -5.0), TrackMyHand.Player(id: "US", buyIn: 5.0, cashOut: 0.0, profit: -5.0), TrackMyHand.Player(id: "AR", buyIn: 5.0, cashOut: 0.0, profit: -5.0), TrackMyHand.Player(id: "SAH", buyIn: 5.0, cashOut: 0.0, profit: -5.0), TrackMyHand.Player(id: "AN", buyIn: 5.0, cashOut: 0.0, profit: -5.0), TrackMyHand.Player(id: "LAY", buyIn: 5.0, cashOut: 0.0, profit: -5.0)], events: []),
                     
-                    allUsers: [TrackMyHand.User(id: "ANIRUDH", totalProfit: 30.0, isFavorite: false, profitData: [0.0, 10.0, 7.0, 14.5, 30.0], totalWins: 3, timePlayed: 0, totalBuyIn: 45.0), TrackMyHand.User(id: "VIBHAV", totalProfit: 0.0, isFavorite: false, profitData: [0.0], totalWins: 0, timePlayed: 0, totalBuyIn: 0.0), TrackMyHand.User(id: "USMAAN", totalProfit: 0.0, isFavorite: false, profitData: [0.0], totalWins: 0, timePlayed: 0, totalBuyIn: 0.0), TrackMyHand.User(id: "SIDAK", totalProfit: 0.0, isFavorite: false, profitData: [0.0], totalWins: 0, timePlayed: 0, totalBuyIn: 0.0), TrackMyHand.User(id: "SAIF", totalProfit: 0.0, isFavorite: false, profitData: [0.0], totalWins: 0, timePlayed: 0, totalBuyIn: 0.0), TrackMyHand.User(id: "SAHAJ", totalProfit: 0.0, isFavorite: false, profitData: [0.0], totalWins: 0, timePlayed: 0, totalBuyIn: 0.0), TrackMyHand.User(id: "LAKSHYA", totalProfit: 0.0, isFavorite: false, profitData: [0.0], totalWins: 0, timePlayed: 0, totalBuyIn: 0.0), TrackMyHand.User(id: "LAKSH", totalProfit: 0.0, isFavorite: false, profitData: [0.0], totalWins: 0, timePlayed: 0, totalBuyIn: 0.0), TrackMyHand.User(id: "ATHARV", totalProfit: 0.0, isFavorite: false, profitData: [0.0], totalWins: 0, timePlayed: 0, totalBuyIn: 0.0), TrackMyHand.User(id: "AREEB", totalProfit: 0.0, isFavorite: false, profitData: [0.0], totalWins: 0, timePlayed: 0, totalBuyIn: 0.0)])
+                    allUsers: [TrackMyHand.User(id: "AN", totalProfit: 30.0, isFavorite: false, profitData: [0.0, 10.0, 7.0, 14.5, 30.0], totalWins: 3, timePlayed: 0, totalBuyIn: 45.0), TrackMyHand.User(id: "US", totalProfit: 0.0, isFavorite: false, profitData: [0.0], totalWins: 0, timePlayed: 0, totalBuyIn: 0.0), TrackMyHand.User(id: "SAI", totalProfit: 0.0, isFavorite: false, profitData: [0.0], totalWins: 0, timePlayed: 0, totalBuyIn: 0.0), TrackMyHand.User(id: "SAH", totalProfit: 0.0, isFavorite: false, profitData: [0.0], totalWins: 0, timePlayed: 0, totalBuyIn: 0.0), TrackMyHand.User(id: "LAY", totalProfit: 0.0, isFavorite: false, profitData: [0.0], totalWins: 0, timePlayed: 0, totalBuyIn: 0.0), TrackMyHand.User(id: "LA", totalProfit: 0.0, isFavorite: false, profitData: [0.0], totalWins: 0, timePlayed: 0, totalBuyIn: 0.0), TrackMyHand.User(id: "AT", totalProfit: 0.0, isFavorite: false, profitData: [0.0], totalWins: 0, timePlayed: 0, totalBuyIn: 0.0), TrackMyHand.User(id: "AR", totalProfit: 0.0, isFavorite: false, profitData: [0.0], totalWins: 0, timePlayed: 0, totalBuyIn: 0.0)])
 }

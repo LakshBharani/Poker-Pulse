@@ -193,6 +193,7 @@ struct NewGameView: View {
                 .onAppear(perform: fetchUsers)
                 .navigationDestination(isPresented: $navigateToGame) {
                     OngoingGameView(game: newGame, allUsers: allUsers)
+                        .transition(.slide)
                 }
             }
             PlacableAdBanner(adIdentifier: "banner0")
