@@ -11,7 +11,7 @@ import AdSupport
 
 struct ContentView: View {
     var body: some View {
-        AuthView()
+        HomeView()
     }
 }
 

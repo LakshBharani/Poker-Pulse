@@ -113,42 +113,42 @@ struct HomeView: View {
                 reloadData()
             }
             .navigationTitle("Poker Tracker")
-            .toolbar {
-                ToolbarItem {
-                    Menu {
-                        Button("Show Login QR", systemImage: "qrcode") {}
-                            .disabled(true)
-                        
-                        Text("Groups coming soon...")
-                        
-                        //                        NavigationLink(destination: JoinGroupView()) {
-                        //                            Button("Switch Group", systemImage: "arrow.left.arrow.right") {}
-                        //                        }
-                        //                        .disabled(true)
-                        //
-                        //                        Button("Exit Group", role: .destructive) {}
-                        //                            .disabled(true)
-                        
-                        Button("Sign Out", systemImage: "rectangle.portrait.and.arrow.right", role: .destructive) {
-                            signOutAlert = true
-                        }
-                    } label: {
-                        Label("Menu", systemImage: "ellipsis.circle")
-                    }
-                    .alert("Sign Out", isPresented: $signOutAlert) {
-                        Button("Cancel", role: .cancel) { }
-                        Button("OK") {
-                            isSignedOut = true
-                        }
-                    } message: {
-                        Text("Are you sure you want to sign out?")
-                    }
-                    .navigationDestination(isPresented: $isSignedOut) {
-                        AuthView()
-                            .transition(.slide)
-                    }
-                }
-            }
+//            .toolbar {
+//                ToolbarItem {
+//                    Menu {
+//                        Button("Show Login QR", systemImage: "qrcode") {}
+//                            .disabled(true)
+//                        
+//                        Text("Groups coming soon...")
+//                        
+//                        //                        NavigationLink(destination: JoinGroupView()) {
+//                        //                            Button("Switch Group", systemImage: "arrow.left.arrow.right") {}
+//                        //                        }
+//                        //                        .disabled(true)
+//                        //
+//                        //                        Button("Exit Group", role: .destructive) {}
+//                        //                            .disabled(true)
+//                        
+//                        Button("Sign Out", systemImage: "rectangle.portrait.and.arrow.right", role: .destructive) {
+//                            signOutAlert = true
+//                        }
+//                    } label: {
+//                        Label("Menu", systemImage: "ellipsis.circle")
+//                    }
+//                    .alert("Sign Out", isPresented: $signOutAlert) {
+//                        Button("Cancel", role: .cancel) { }
+//                        Button("OK") {
+//                            isSignedOut = true
+//                        }
+//                    } message: {
+//                        Text("Are you sure you want to sign out?")
+//                    }
+//                    .navigationDestination(isPresented: $isSignedOut) {
+//                        AuthView()
+//                            .transition(.slide)
+//                    }
+//                }
+//            }
             PlacableAdBanner(adIdentifier: "banner0")
         }
         .onAppear {

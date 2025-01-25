@@ -12,7 +12,7 @@ import Foundation
 
 struct UserDetails: View {
     @State private var cumulativeYData: [Double] = []
-
+    
     var user: User
     let columns = [
         GridItem(.flexible()),
@@ -29,6 +29,7 @@ struct UserDetails: View {
         let maxLoss = String(format: "%.2f", user.profitData.min()!)
         let averageBuyIn = String(format: "%.2f", user.totalBuyIn / Double(user.profitData.count - 1))
         let screenGradient = user.totalProfit >= 0 ? [Color.green.opacity(0.25), Color.black] : [Color.red.opacity(0.25), Color.black]
+        let totalWagered = user.totalBuyIn >= 1000 ? String(format: "%.2fK", user.totalBuyIn / 1000) : String(format: "%.2f", user.totalBuyIn)
         
         NavigationStack {
             ScrollView {
@@ -60,6 +61,7 @@ struct UserDetails: View {
                             createReactiveInfoBox(title: "\(user.totalProfit >= 0 ? "Profit" : "Loss") / Session", value: profit_per_session)
                             createInfoBox(title: "Minutes Played", value: timePlayed)
                             createReactiveInfoBox(title: "\(user.totalProfit >= 0 ? "Profit" : "Loss") / Minute", value: profit_per_min)
+                            createInfoBox(title: "Total Wagered", value: totalWagered)
                             createInfoBox(title: "Avg. BuyIn", value: averageBuyIn)
                         }
                         .padding(.horizontal)

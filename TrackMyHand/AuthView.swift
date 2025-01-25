@@ -18,31 +18,11 @@ struct AuthView: View {
                 )
                 .edgesIgnoringSafeArea(.all)
 
-                GeometryReader { geometry in
-                    VStack {
-                        Spacer()
-                        
-                        Image("my-logo-transparent")
-                            .resizable()
-                            .scaledToFit()
-                            .padding(25)
-                            .frame(width: 150) // Fixed width
-                            .background(Color.black.opacity(0.25))
-                            .clipShape(Circle())
-                            .shadow(radius: 10)
-                        
-                        Spacer()
-                            .frame(height: geometry.size.height * 0.1)
-                        
-                        AuthenticationMenu()
-                        
-                        Spacer()
-                    }
-                    .padding()
-                    .frame(width: geometry.size.width, height: geometry.size.height)
-                    .ignoresSafeArea(.keyboard)
-                    
-                }
+                VStack {
+                    AuthenticationMenu()
+                        .padding()
+                    Spacer()
+                }.navigationTitle(Text("Poker Tracker"))
             }
             .navigationBarBackButtonHidden(true)
         }
