@@ -27,6 +27,7 @@ struct Player: Identifiable, Codable {
 
 struct Game: Identifiable, Codable {
     var isActive: Bool
+    var buyIn: Double
     var isGameEnded: Bool
     var id: String
     var timeElapsed: [Int]

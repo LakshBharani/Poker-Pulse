@@ -15,7 +15,7 @@ struct NewGameView: View {
     
     @State private var showTextField = false
     @State private var newPlayerUID: String = ""
-    @State private var buyInAmount: String = "5"
+    @State var buyInAmount: String = "0"
     @State private var isAllPlayersUnique: Bool = true
     @State private var isAllPlayersExisting: Bool = true
     @State private var showAlert = false
@@ -23,7 +23,7 @@ struct NewGameView: View {
     @State private var playerPins: [String: AuthData] = [:]
     @StateObject private var firestoreService = FirestoreService()
     @State private var startGame: Bool = false
-    @State private var newGame: Game = Game(isActive: false, isGameEnded: false, id: "", timeElapsed: [0, 0, 0], gameCode: "", totalPot: 0.0, cashOut: 0, date: Date(), players: [], events: [])
+    @State private var newGame: Game = Game(isActive: false, buyIn: 0, isGameEnded: false, id: "", timeElapsed: [0, 0, 0], gameCode: "", totalPot: 0.0, cashOut: 0, date: Date(), players: [], events: [])
     @State private var navigateToGame: Bool = false
     @State private var playerPin: String = ""
     @State private var isOKDisabled: Bool = true
@@ -79,7 +79,7 @@ struct NewGameView: View {
                                 Button("OK") {
                                     firestoreService.createUser(id: newPlayerUID, pin: playerPin) { _ in }
                                     allUsers.append(User(id: newPlayerUID, pin: playerPin, totalProfit: 0, isFavorite: false, profitData: [0], totalWins: 0, timePlayed: 0, totalBuyIn: 0))
-                                    allPlayers.append(Player(id: newPlayerUID, buyIn: 5, cashOut: 0, profit: -5.00))
+                                    allPlayers.append(Player(id: newPlayerUID, buyIn: Double(buyInAmount)!, cashOut: 0, profit: -1 * Double(buyInAmount)!))
                                     newPlayerUID = ""
                                     playerPin = ""
                                 }
@@ -97,7 +97,7 @@ struct NewGameView: View {
                             Button(action: {
                                 if !newPlayerUID.isEmpty {
                                     newPlayerUID = newPlayerUID.trimmingCharacters(in: .whitespacesAndNewlines)
-                                    let newPlayer = Player(id: newPlayerUID, buyIn: 5, cashOut: 0, profit: -5.00)
+                                    let newPlayer = Player(id: newPlayerUID, buyIn: Double(buyInAmount)!, cashOut: 0, profit: -1 * Double(buyInAmount)!)
                                     allPlayers.append(newPlayer)
                                     newPlayerUID = ""
                                 }
@@ -178,8 +178,8 @@ struct NewGameView: View {
                             .foregroundStyle(.white).opacity(0.7)
                         Divider()
                             .padding(.horizontal, 5)
-                        Text("5")
-                            .bold()
+                        TextField("amount", text: $buyInAmount)
+                            .keyboardType(.decimalPad)
                         Spacer()
                         Text("Dollars")
                             .foregroundStyle(.white).opacity(0.7)
@@ -187,7 +187,7 @@ struct NewGameView: View {
 
                 // Save button
                     Button("Create Game", action: authenticateAllPlayers)
-                        .disabled(allPlayers.count < 2)
+                        .disabled(allPlayers.count < 2 || buyInAmount.isEmpty)
                 }
                 .navigationTitle("Create Game")
                 .onAppear(perform: fetchUsers)
@@ -205,7 +205,7 @@ struct NewGameView: View {
     // MARK: - Helper Functions
     private func quickAddFavorites() {
         let favorites = allUsers.filter { $0.isFavorite }.map { $0.id }
-        allPlayers = favorites.map { Player(id: $0, buyIn: 5, cashOut: 0, profit: -5.00) }
+        allPlayers = favorites.map { Player(id: $0, buyIn: Double(buyInAmount)!, cashOut: 0, profit: -1 * Double(buyInAmount)!) }
     }
 
     private func createNewUser() {
@@ -214,7 +214,7 @@ struct NewGameView: View {
 
         firestoreService.createUser(id: newPlayerUID) { _ in }
         allUsers.append(User(id: newPlayerUID, totalProfit: 0, isFavorite: false, profitData: [0], totalWins: 0, timePlayed: 0, totalBuyIn: 0))
-        allPlayers.append(Player(id: newPlayerUID, buyIn: 5, cashOut: 0, profit: -5.00))
+        allPlayers.append(Player(id: newPlayerUID, buyIn: Double(buyInAmount)!, cashOut: 0, profit: -1 * Double(buyInAmount)!))
         newPlayerUID = ""
         isAllPlayersExisting = true
     }
@@ -223,7 +223,7 @@ struct NewGameView: View {
         newPlayerUID = newPlayerUID.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !newPlayerUID.isEmpty else { return }
 
-        let newPlayer = Player(id: newPlayerUID, buyIn: 5, cashOut: 0, profit: -5.00)
+        let newPlayer = Player(id: newPlayerUID, buyIn: Double(buyInAmount)!, cashOut: 0, profit: -1 * Double(buyInAmount)!)
         allPlayers.append(newPlayer)
         newPlayerUID = ""
     }
@@ -263,11 +263,17 @@ struct NewGameView: View {
 
     private func createGame() {
         let uid = UUID().uuidString
-        let totalPot = Double(allPlayers.count) * 5.0
+        let totalPot = Double(allPlayers.count) * Double(buyInAmount)!
         let gameCode = String(uid.prefix(3) + uid.suffix(3))
+        for index in allPlayers.indices {
+            allPlayers[index].buyIn = Double(buyInAmount)!
+            allPlayers[index].profit = -1 * Double(buyInAmount)!
+        }
 
         newGame = Game(
             isActive: true,
+            // TODO: fix buy in
+            buyIn: Double(buyInAmount)!,
             isGameEnded: false,
             id: uid,
             timeElapsed: [0, 0, 0],

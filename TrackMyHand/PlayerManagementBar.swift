@@ -23,8 +23,8 @@ struct PlayerManagementBar: View {
     
     func logEvent(newEvent: Transaction) {
         if let playerIndex = game.players.firstIndex(where: { $0.id == newEvent.to }) {
-            game.players[playerIndex].profit -= Double(newEvent.amount)!
             if (newEvent.description != "player joined") {
+                game.players[playerIndex].profit -= Double(newEvent.amount)!
                 game.players[playerIndex].buyIn += Double(newEvent.amount)!
             }
         }
@@ -86,7 +86,8 @@ struct PlayerManagementBar: View {
                     
                     Button {
                         if isPwdMatching {
-                            let newPlayer = Player(id: playerId, buyIn: 5.00, cashOut: 0.00, profit: 0.00)
+                            print(game.buyIn, -game.buyIn)
+                            let newPlayer = Player(id: playerId, buyIn: game.buyIn, cashOut: 0.00, profit: -game.buyIn)
                             let transaction = Transaction(id: game.events.count, description: "player joined", from: "BANK", to: playerId, amount: String(format: "%.2f", newPlayer.buyIn))
                             game.players.append(newPlayer)
                             logEvent(newEvent: transaction)

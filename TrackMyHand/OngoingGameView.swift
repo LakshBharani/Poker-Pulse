@@ -83,9 +83,8 @@ struct OngoingGameView: View {
                                     game.players.insert(Player(id: "BANK", buyIn: 0, cashOut: 0, profit: 0), at: 0)
                                 }
                                 for player in game.players {
-                                    game.events.append(Transaction(id: game.events.count, description: "Initial BuyIn", from: "BANK", to: player.id, amount: "5.00"))
+                                    game.events.append(Transaction(id: game.events.count, description: "Initial BuyIn", from: "BANK", to: player.id, amount: String(format: "%.2f", game.buyIn)))
                                 }
-                                logEvent(newEvent: Transaction(id: game.events.count, description: "Players Joined", from: "", to: "", amount: ""))
                             } else {
                                 timer.hoursElapsed = game.timeElapsed[0]
                                 timer.minutesElapsed = game.timeElapsed[1]
@@ -441,7 +440,7 @@ struct TransactionView: View {
 
 
 #Preview {
-    OngoingGameView(game: Game(isActive: true, isGameEnded: false, id: "7B97E339-3EEF-4431-B6A7-85681B64D002", timeElapsed: [0, 0, 0], gameCode: "7B9002", totalPot: 40.0, cashOut: 0, date: Date(), players: [TrackMyHand.Player(id: "LA", buyIn: 5.0, cashOut: 0.0, profit: -5.0), TrackMyHand.Player(id: "AT", buyIn: 5.0, cashOut: 0.0, profit: -5.0), TrackMyHand.Player(id: "SAI", buyIn: 5.0, cashOut: 0.0, profit: -5.0), TrackMyHand.Player(id: "US", buyIn: 5.0, cashOut: 0.0, profit: -5.0), TrackMyHand.Player(id: "AR", buyIn: 5.0, cashOut: 0.0, profit: -5.0), TrackMyHand.Player(id: "SAH", buyIn: 5.0, cashOut: 0.0, profit: -5.0), TrackMyHand.Player(id: "AN", buyIn: 5.0, cashOut: 0.0, profit: -5.0), TrackMyHand.Player(id: "LAY", buyIn: 5.0, cashOut: 0.0, profit: -5.0)], events: []),
+    OngoingGameView(game: Game(isActive: true, buyIn: 0, isGameEnded: false, id: "7B97E339-3EEF-4431-B6A7-85681B64D002", timeElapsed: [0, 0, 0], gameCode: "7B9002", totalPot: 40.0, cashOut: 0, date: Date(), players: [TrackMyHand.Player(id: "LA", buyIn: 5.0, cashOut: 0.0, profit: -5.0), TrackMyHand.Player(id: "AT", buyIn: 5.0, cashOut: 0.0, profit: -5.0), TrackMyHand.Player(id: "SAI", buyIn: 5.0, cashOut: 0.0, profit: -5.0), TrackMyHand.Player(id: "US", buyIn: 5.0, cashOut: 0.0, profit: -5.0), TrackMyHand.Player(id: "AR", buyIn: 5.0, cashOut: 0.0, profit: -5.0), TrackMyHand.Player(id: "SAH", buyIn: 5.0, cashOut: 0.0, profit: -5.0), TrackMyHand.Player(id: "AN", buyIn: 5.0, cashOut: 0.0, profit: -5.0), TrackMyHand.Player(id: "LAY", buyIn: 5.0, cashOut: 0.0, profit: -5.0)], events: []),
                     
                     allUsers: [TrackMyHand.User(id: "AN", totalProfit: 30.0, isFavorite: false, profitData: [0.0, 10.0, 7.0, 14.5, 30.0], totalWins: 3, timePlayed: 0, totalBuyIn: 45.0), TrackMyHand.User(id: "US", totalProfit: 0.0, isFavorite: false, profitData: [0.0], totalWins: 0, timePlayed: 0, totalBuyIn: 0.0), TrackMyHand.User(id: "SAI", totalProfit: 0.0, isFavorite: false, profitData: [0.0], totalWins: 0, timePlayed: 0, totalBuyIn: 0.0), TrackMyHand.User(id: "SAH", totalProfit: 0.0, isFavorite: false, profitData: [0.0], totalWins: 0, timePlayed: 0, totalBuyIn: 0.0), TrackMyHand.User(id: "LAY", totalProfit: 0.0, isFavorite: false, profitData: [0.0], totalWins: 0, timePlayed: 0, totalBuyIn: 0.0), TrackMyHand.User(id: "LA", totalProfit: 0.0, isFavorite: false, profitData: [0.0], totalWins: 0, timePlayed: 0, totalBuyIn: 0.0), TrackMyHand.User(id: "AT", totalProfit: 0.0, isFavorite: false, profitData: [0.0], totalWins: 0, timePlayed: 0, totalBuyIn: 0.0), TrackMyHand.User(id: "AR", totalProfit: 0.0, isFavorite: false, profitData: [0.0], totalWins: 0, timePlayed: 0, totalBuyIn: 0.0)])
 }
