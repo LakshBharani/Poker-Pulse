@@ -103,6 +103,10 @@ struct HomeView: View {
                                     .opacity(0)
                             )
                         }
+                        NavigationLink(destination: AllGames()) {
+                            Button("Show More") {}
+                        }
+                        .disabled(games.isEmpty)
                     }
                 }
             }

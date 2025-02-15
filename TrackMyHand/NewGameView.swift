@@ -298,7 +298,6 @@ struct NewGameView: View {
         firestoreService.fetchUsers { users in
             allUsers = users
             favorites = allUsers.filter { $0.isFavorite }.map { $0.id }
-            print(favorites) // Ensure favorites are being populated correctly
         }
     }
 

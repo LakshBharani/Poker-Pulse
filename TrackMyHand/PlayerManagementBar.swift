@@ -86,7 +86,6 @@ struct PlayerManagementBar: View {
                     
                     Button {
                         if isPwdMatching {
-                            print(game.buyIn, -game.buyIn)
                             let newPlayer = Player(id: playerId, buyIn: game.buyIn, cashOut: 0.00, profit: -game.buyIn)
                             let transaction = Transaction(id: game.events.count, description: "player joined", from: "BANK", to: playerId, amount: String(format: "%.2f", newPlayer.buyIn))
                             game.players.append(newPlayer)
@@ -162,7 +161,7 @@ struct PlayerManagementBar: View {
                         
                         Button("OK") {
                             firestoreService.createUser(id: playerId, pin: playerPin) { _ in }
-                            let newPlayer = Player(id: playerId, buyIn: 5.00, cashOut: 0.00, profit: 0.00)
+                            let newPlayer = Player(id: playerId, buyIn: game.buyIn, cashOut: 0.00, profit: -game.buyIn)
                             let transaction = Transaction(id: game.events.count, description: "player joined", from: "BANK", to: playerId, amount: String(format: "%.2f", newPlayer.buyIn))
                             game.players.append(newPlayer)
                             logEvent(newEvent: transaction)

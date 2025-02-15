@@ -84,6 +84,7 @@ struct UserDetails: View {
             .navigationTitle("\(user.id)")
         }
         .scrollIndicators(.hidden)
+        PlacableAdBanner(adIdentifier: "banner0")
     }
     
     
