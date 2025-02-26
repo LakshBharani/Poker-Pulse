@@ -16,7 +16,7 @@ TrackMyHand is an iOS-exclusive poker tracking app designed to predict your upco
 
 ## Installation
 
-1. Download the app from the [Apple App Store](#).
+1. Download the app from the [Apple App Store](https://apps.apple.com/us/app/trackmyhand/id6740495158).
 2. Install and open the app on your iOS device.
 3. Create an account and start tracking your games!
 
