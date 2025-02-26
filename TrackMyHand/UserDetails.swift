@@ -48,11 +48,11 @@ struct UserDetails: View {
                         // widget showing profit over time
                         
                         ChartWidget(user: user)
-                            .frame(height: 375)
+                            .frame(height: 400)
                             
                         HStack {
                             createSubtitleInfoBox(title: "Win Rate (%)", value0: "\(winRate)%", subtitle1: "W", subtitle2: "L", value1: String(user.totalWins), value2: String(user.profitData.count - user.totalWins - 1), isReactive: false)
-                            createSubtitleInfoBox(title: "All Time ($)", value0: String(user.totalProfit), subtitle1: "Hi", subtitle2: "Lo", value1: String(maxProfit), value2: String(maxLoss), isReactive: true)
+                            createSubtitleInfoBox(title: "All Time ($)", value0: String(format:"%.2f",  user.totalProfit), subtitle1: "Hi", subtitle2: "Lo", value1: String(maxProfit), value2: String(maxLoss), isReactive: true)
                         }
                         .padding(.horizontal)
                         
@@ -217,5 +217,5 @@ struct HLine: Shape {
 
 
 #Preview {
-    UserDetails(user: User(id: "LAKSH", totalProfit: -50, isFavorite: false, profitData: [0, 5, 10, 7.25, 5, -10, -30, -50], totalWins: 2, timePlayed: 600, totalBuyIn: 50))
+    UserDetails(user: User(id: "LAKSH", totalProfit: -50.69999, isFavorite: false, profitData: [0, 5, 10, 7.25, 5, -10, -30, -50], totalWins: 2, timePlayed: 600, totalBuyIn: 50))
 }

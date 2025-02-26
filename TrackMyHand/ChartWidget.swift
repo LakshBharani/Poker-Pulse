@@ -17,14 +17,26 @@ struct ChartWidget: View {
     @State var offset: CGSize = .zero
     @State var showPlot = false
     @State var translation: CGFloat = 0
+    
     @State var period: Int = 1
+    @State private var chosenTimeFrame = "All Time"
+    var timeFrames = ["All Time", "10 games", "50 games"]
     
     @State private var showWeightedAvg: Bool = true
     
     var body: some View {
         VStack(alignment: .leading) {
-            let profitData = user.profitData
-            let smaValues = simpleMovingAverage(data: profitData, period: period)
+            let smaValues = simpleMovingAverage(data: filteredProfitData, period: period)
+            
+            Picker("Time Frame",
+                   selection: $chosenTimeFrame) {
+                ForEach(timeFrames, id: \.self) {
+                    Text($0)
+                }
+            }
+                   .pickerStyle(.segmented)
+                   .padding(.horizontal)
+                   .padding(.bottom)
             
             HStack {
                 Rectangle()
@@ -45,16 +57,16 @@ struct ChartWidget: View {
                     .foregroundStyle(.white).opacity(0.7)
                     .lineLimit(1)
             }
-            .padding(.horizontal)
+            .padding(.horizontal, 25)
             .padding(.bottom)
             
             
             Chart {
                 // Plot main line and area chart
-                ForEach(0..<user.profitData.count, id: \.self) { session in
+                ForEach(0..<filteredProfitData.count, id: \.self) { session in
                     AreaMark(
                         x: PlottableValue.value("Session", session),
-                        y: PlottableValue.value("Net Profit", user.profitData[session])
+                        y: PlottableValue.value("Net Profit", filteredProfitData[session])
                     )
                     .foregroundStyle(getCurveGradient(profit: user.totalProfit))
                     
@@ -68,14 +80,14 @@ struct ChartWidget: View {
                     
                     LineMark(
                         x: PlottableValue.value("Session", session),
-                        y: PlottableValue.value("Net Profit", user.profitData[session]),
+                        y: PlottableValue.value("Net Profit", filteredProfitData[session]),
                         series: .value("Line", "main")
                     )
                     .foregroundStyle(getProfitColor(profit: user.totalProfit))
                     
                     PointMark(
                         x: PlottableValue.value("Session", session),
-                        y: PlottableValue.value("Net Profit", user.profitData[session])
+                        y: PlottableValue.value("Net Profit", filteredProfitData[session])
                     )
                     .foregroundStyle(getProfitColor(profit: user.totalProfit))
                     .symbolSize(20)
@@ -90,7 +102,7 @@ struct ChartWidget: View {
                     TouchInteractionView(
                         proxy: proxy,
                         geometry: geometry,
-                        user: user
+                        filteredProfitData: filteredProfitData
                     )
                 }
             }
@@ -103,18 +115,18 @@ struct ChartWidget: View {
                     .foregroundColor(.white).opacity(0.5)
             }
             .chartLegend(position: .top, alignment: .leading)
-            .chartXScale(domain: 0...(user.profitData.count - 1))
+            .chartXScale(domain: 0...(filteredProfitData.count - 1))
             .padding(.bottom)
             .padding(.horizontal)
         }
         
         .onAppear() {
-            if user.profitData.count < 4 {
+            if filteredProfitData.count < 4 {
                 period = 1
-            } else if user.profitData.count < 10 {
+            } else if filteredProfitData.count < 10 {
                 period = 5
             } else {
-                period = user.profitData.count < 4 ? 1 : Int(user.profitData.count / 5)
+                period = filteredProfitData.count < 4 ? 1 : Int(filteredProfitData.count / 5)
             }
             
         }
@@ -137,7 +149,7 @@ struct ChartWidget: View {
         return smaValues
     }
     
-
+    
     func getProfitColor(profit: Double) -> Color {
         if (profit >= 0) {
             return Color.green
@@ -152,32 +164,42 @@ struct ChartWidget: View {
         
         if (profit >= 0) {
             return Gradient (
-                    colors: [
-                        profitColor.opacity(0.5),
-                        profitColor.opacity(0.2),
-                        profitColor.opacity(0.1),
-                        profitColor.opacity(0.03),
-                    ]
-                )
+                colors: [
+                    profitColor.opacity(0.5),
+                    profitColor.opacity(0.2),
+                    profitColor.opacity(0.1),
+                    profitColor.opacity(0.03),
+                ]
+            )
             
         } else {
             return Gradient (
-                    colors: [
-                        lossColor.opacity(0.5),
-                        lossColor.opacity(0.2),
-                        lossColor.opacity(0.1),
-                        lossColor.opacity(0.03),
-                    ]
-                )
+                colors: [
+                    lossColor.opacity(0.5),
+                    lossColor.opacity(0.2),
+                    lossColor.opacity(0.1),
+                    lossColor.opacity(0.03),
+                ]
+            )
         }
     }
     
+    var filteredProfitData: [Double] {
+        switch chosenTimeFrame {
+        case "10 games":
+            return user.profitData.suffix(10)
+        case "50 games":
+            return user.profitData.suffix(50)
+        default:
+            return user.profitData
+        }
+    }
 }
 
 struct TouchInteractionView: View {
     let proxy: ChartProxy
     let geometry: GeometryProxy
-    let user: User
+    let filteredProfitData: [Double]
 
     @State private var hoveredXValue: Int?
     @State private var hoveredYValue: Double?
@@ -198,12 +220,12 @@ struct TouchInteractionView: View {
                             hoveredXValue = xValue
 
                             // Get corresponding Y-axis value
-                            if xValue >= 0 && xValue < user.profitData.count {
-                                hoveredYValue = user.profitData[xValue]
+                            if xValue >= 0 && xValue < filteredProfitData.count {
+                                hoveredYValue = filteredProfitData[xValue]
 
                                 // Calculate offset for hover tooltip
                                 if let xPosition = proxy.position(forX: xValue),
-                                   let yPosition = proxy.position(forY: user.profitData[xValue]) {
+                                   let yPosition = proxy.position(forY: filteredProfitData[xValue]) {
                                     offset = CGSize(width: xPosition - geometry.size.width / 2 + 21.5,
                                                     height: yPosition - geometry.size.height / 2 - 15)
                                 }

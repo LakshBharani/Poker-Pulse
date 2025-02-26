@@ -15,6 +15,7 @@ struct HomeView: View {
     @Environment(\.colorScheme) var colorScheme
     @State private var users: [User] = []
     @State private var games: [Game] = []
+    @State private var onGoingGames: [Game] = []
     @State private var gamesFetched = 5
     @State private var totalUsers = 0
     @State private var totalGames = 0
@@ -73,10 +74,39 @@ struct HomeView: View {
                         .disabled(users.isEmpty)
                     }
                     
-                    Section(header: Text("Games (\(totalGames))")) {
+                    Section(header: Text("Ongoing Games (\(onGoingGames.count))")) {
                         NavigationLink(destination: NewGameView()) {
                             Button("New Game") {}
                         }
+                        ForEach(onGoingGames) { game in
+                            HStack {
+                                VStack(alignment: .leading, spacing: 4) {
+                                    Text("\(game.gameCode)")
+                                        .fontWeight(.semibold)
+                                        .foregroundStyle(.orange)
+                                    Text("\(game.date.formatted(date: .long, time: .shortened))")
+                                        .foregroundColor(.white).opacity(0.7)
+                                        .bold()
+                                        .font(.system(size: 14))
+                                    Text("Players : \(game.players.count - 1)")
+                                        .foregroundColor(.white).opacity(0.7)
+                                        .bold()
+                                        .font(.system(size: 14))
+                                        .font(.system(size: 14))
+                                    Text("Total Buy-In : \(game.totalPot, specifier: "%.2f")")
+                                        .foregroundColor(.white).opacity(0.7)
+                                        .bold()
+                                        .font(.system(size: 14))
+                                }
+                            }
+                            .background(
+                                NavigationLink(destination: OngoingGameView(game: game, allUsers: users)) {}
+                                    .opacity(0)
+                            )
+                        }
+                    }
+                    
+                    Section(header: Text("Games (\(totalGames))")) {
                         ForEach(games) { game in
                             HStack {
                                 VStack(alignment: .leading, spacing: 4) {
@@ -116,7 +146,7 @@ struct HomeView: View {
             .refreshable {
                 reloadData()
             }
-            .navigationTitle("Poker Tracker")
+            .navigationTitle("Poker Pulse")
 //            .toolbar {
 //                ToolbarItem {
 //                    Menu {
@@ -173,6 +203,9 @@ struct HomeView: View {
         }
         firestoreService.fetchTotalGameCount() { count in
             self.totalGames = count ?? totalGames
+        }
+        firestoreService.fetchOngoingGames(limit: 10) { games in
+            self.onGoingGames = games
         }
     }
     

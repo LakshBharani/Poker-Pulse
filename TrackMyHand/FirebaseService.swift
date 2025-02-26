@@ -124,6 +124,22 @@ class FirestoreService: ObservableObject {
             }
     }
     
+    // Fetch all ongoing games
+    func fetchOngoingGames(limit: Int, completion: @escaping ([Game]) -> Void) {
+        db.collection("games")
+            .whereField("isActive", isEqualTo: true)
+//            .order(by: "date", descending: true)
+            .limit(to: limit)
+            .getDocuments { (snapshot, error) in
+                guard let documents = snapshot?.documents else {
+                    print("Error fetching games: \(error?.localizedDescription ?? "Unknown error")")
+                    return
+                }
+                let games = documents.compactMap { try? $0.data(as: Game.self) }
+                completion(games)
+            }
+    }
+    
     // fetch total number of games
     func fetchTotalGameCount(completion: @escaping (Int?) -> Void) {
         db.collection("games").getDocuments { (querySnapshot, err) in

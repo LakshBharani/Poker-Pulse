@@ -188,6 +188,12 @@ struct NewGameView: View {
                 // Save button
                     Button("Create Game", action: authenticateAllPlayers)
                         .disabled(allPlayers.count < 2 || buyInAmount.isEmpty)
+                        .alert("Try Again", isPresented: $showAlert) {
+                            Button("OK", role: .cancel) {}
+                        } message : {
+                            Text(errorMessage)
+                        }
+                        
                 }
                 .navigationTitle("Create Game")
                 .onAppear(perform: fetchUsers)
@@ -317,6 +323,9 @@ struct NewGameView: View {
         }
         if isAllValid {
             createGame()
+        } else {
+            showAlert = true
+            errorMessage = "One or more players have entered an incorrect pin."
         }
     }
 
