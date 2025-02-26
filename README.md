@@ -1,6 +1,6 @@
-# TrackMyHand
+# Poker Pulse - Bankroll Tracker
 
-TrackMyHand is an iOS-exclusive poker tracking app designed to predict your upcoming game profits and provide detailed insights into your poker sessions. Built with SwiftUI and powered by Firebase Firestore, it offers a seamless and visually appealing experience for all poker enthusiasts.
+Poker Pulse is an iOS-exclusive poker tracking app designed to predict your upcoming game profits and provide detailed insights into your poker sessions. Built with SwiftUI and powered by Firebase Firestore, it offers a seamless and visually appealing experience for all poker enthusiasts.
 
 ---
 
