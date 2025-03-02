@@ -2,6 +2,8 @@
 
 Poker Pulse is an iOS-exclusive poker tracking app designed to predict your upcoming game profits and provide detailed insights into your poker sessions. Built with SwiftUI and powered by Firebase Firestore, it offers a seamless and visually appealing experience for all poker enthusiasts.
 
+https://github.com/user-attachments/assets/e2cdfc6b-d510-47b6-971d-00b1d48e43d4
+
 ---
 
 ## Features
